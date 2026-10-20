@@ -6,7 +6,7 @@ Aplicação web em português para organizar projetos criativos de desenhos, per
 
 1. Instale Node.js (versão LTS) e npm.
 2. Copie `.env.example` para `.env.local`.
-3. Preencha as variáveis com a URL do projeto Supabase e a chave pública (publishable/anon). Nunca use a chave `service_role` no navegador.
+3. Preencha as variáveis com a URL do projeto Supabase e a chave pública (`VITE_SUPABASE_PUBLISHABLE_KEY`). Nunca use a chave `service_role` no navegador.
 4. Instale dependências e rode:
 
 ```bash
