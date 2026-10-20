@@ -191,6 +191,17 @@ export default function App() {
   async function deleteProject(project: CreativeProject) {
     if (!supabase || !user || !window.confirm('Excluir o projeto "' + project.title + '" e todo o conteúdo vinculado? Essa ação não pode ser desfeita.')) return
     setProjectError('')
+    const { data: media, error: mediaQueryError } = await supabase.from('media_assets').select('storage_path').eq('project_id', project.id)
+    if (mediaQueryError) { setProjectError('Não foi possível preparar a exclusão: ' + mediaQueryError.message); return }
+    const paths = (media ?? []).map(item => item.storage_path).filter((path): path is string => Boolean(path))
+    if (paths.length) {
+      const { error: storageError } = await supabase.storage.from('creative-media').remove(paths)
+      if (storageError) { setProjectError('Não foi possível remover os arquivos do projeto: ' + storageError.message); return }
+    }
+    for (const table of ['media_assets', 'generation_jobs', 'scenes', 'songs', 'episodes', 'characters'] as const) {
+      const { error } = await supabase.from(table).delete().eq('project_id', project.id).eq('user_id', user.id)
+      if (error) { setProjectError('Não foi possível excluir o conteúdo (' + table + '): ' + error.message); return }
+    }
     const { error } = await supabase.from('creative_projects').delete().eq('id', project.id).eq('user_id', user.id)
     if (error) { setProjectError('Não foi possível excluir o projeto: ' + error.message); return }
     setEditingProject(null)
