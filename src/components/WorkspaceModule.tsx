@@ -163,23 +163,25 @@ function MediaLibrary({ userId, projects }: { userId: string; projects: ProjectO
     if (!files.length) { setError('Escolha pelo menos um arquivo.'); return }
     if (files.some(file => file.size > 50 * 1024 * 1024)) { setError('Cada arquivo precisa ter no máximo 50 MB.'); return }
     setUploading(true); setError(''); setMessage('')
+    let failed = false
     for (const file of files) {
       const safeName = file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(-100) || 'arquivo'
       const path = userId + '/' + projectId + '/' + crypto.randomUUID() + '-' + safeName
       const { error: uploadError } = await supabase.storage.from('creative-media').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
-      if (uploadError) { setError('Falha ao enviar "' + file.name + '": ' + uploadError.message); break }
+      if (uploadError) { setError('Falha ao enviar "' + file.name + '": ' + uploadError.message); failed = true; break }
       const type: MediaAsset['asset_type'] = file.type.startsWith('image/') ? 'image' : file.type.startsWith('audio/') ? 'audio' : file.type.startsWith('video/') ? 'video' : file.type === 'application/pdf' ? 'document' : 'other'
       const { error: insertError } = await supabase.from('media_assets').insert({ user_id: userId, project_id: projectId, asset_type: type, title: file.name, storage_path: path, mime_type: file.type || null, metadata: { size_bytes: file.size } })
       if (insertError) {
         await supabase.storage.from('creative-media').remove([path])
         setError('O arquivo foi enviado, mas não foi possível registrar na biblioteca: ' + insertError.message)
+        failed = true
         break
       }
     }
     setUploading(false)
     if (fileInput) fileInput.value = ''
     if (!form.isConnected) return
-    if (!error) setMessage('Envio finalizado. Seus arquivos estão salvos na nuvem.')
+    if (!failed) setMessage('Envio finalizado. Seus arquivos estão salvos na nuvem.')
     await loadAssets()
   }
 
