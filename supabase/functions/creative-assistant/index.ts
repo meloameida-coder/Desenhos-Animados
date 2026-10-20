@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: "Envie uma solicitação válida." }), { status: 400, headers: corsHeaders });
   }
   const task = body.task ?? "";
-  if (!(task in taskInstructions)) {
+  if (!Object.hasOwn(taskInstructions, task)) {
     return new Response(JSON.stringify({ error: "Tipo de criação não suportado." }), { status: 400, headers: corsHeaders });
   }
   const context = JSON.stringify(body.context ?? {}).slice(0, 12000);
