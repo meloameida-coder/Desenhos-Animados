@@ -49,6 +49,9 @@ export default function App() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [profileName, setProfileName] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileMessage, setProfileMessage] = useState('')
   const [authMessage, setAuthMessage] = useState('')
   const [authError, setAuthError] = useState('')
   const [authBusy, setAuthBusy] = useState(false)
@@ -158,6 +161,20 @@ export default function App() {
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Não foi possível concluir a solicitação.')
     } finally { setAuthBusy(false) }
+  }
+
+  useEffect(() => {
+    setProfileName(String(user?.user_metadata?.display_name ?? ''))
+  }, [user?.id, user?.user_metadata?.display_name])
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!supabase || !user) return
+    setSavingProfile(true); setProfileMessage('')
+    const { error } = await supabase.auth.updateUser({ data: { display_name: profileName.trim() } })
+    setSavingProfile(false)
+    if (error) setProfileMessage('Não foi possível atualizar: ' + error.message)
+    else setProfileMessage('Nome atualizado com sucesso.')
   }
 
   async function signOut() {
@@ -327,7 +344,7 @@ export default function App() {
               {projectsLoading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando seus projetos...</div> : filteredProjects.length ? <div className="project-grid all-projects">{filteredProjects.map((project, i) => <ProjectCard key={project.id} project={project} index={i} onClick={() => setEditingProject(project)} />)}<button className="new-project-card" onClick={() => setShowNewProject(true)}><span className="new-project-icon"><Plus size={22} /></span><strong>Nova criação</strong><span>Uma ideia esperando para nascer</span></button></div> : <EmptyProjects onCreate={() => setShowNewProject(true)} filtered={search.length > 0} />}
             </>
           ) : activePage === 'settings' ? (
-            <section className="placeholder-page"><div className="placeholder-icon"><Settings2 size={25} /></div><div className="form-kicker">PREFERÊNCIAS</div><h1>Configurações</h1><p>Você está conectado como <strong>{session.user.email}</strong>.</p><div className="settings-panel"><div><strong>Conta e segurança</strong><span>Autenticação gerenciada pelo Supabase.</span></div><button className="secondary-button" onClick={signOut}><LogOut size={16} /> Sair da conta</button></div><div className="settings-panel"><div><strong>Seus dados</strong><span>Seus projetos são salvos na nuvem e separados por conta.</span></div><span className="secure-pill"><Check size={14} /> Proteção ativa</span></div></section>
+            <section className="placeholder-page"><div className="placeholder-icon"><Settings2 size={25} /></div><div className="form-kicker">PREFERÊNCIAS</div><h1>Configurações</h1><p>Gerencie seu perfil e a segurança da conta.</p><form className="settings-panel profile-settings" onSubmit={saveProfile}><div><strong>Seu perfil</strong><span>{session.user.email}</span><label>Nome de exibição<input value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="Como devemos te chamar?" maxLength={80} /></label>{profileMessage && <span className="settings-feedback">{profileMessage}</span>}</div><button className="primary-button" type="submit" disabled={savingProfile}>{savingProfile ? <LoaderCircle size={16} className="spin" /> : <Check size={16} />} Salvar perfil</button></form><div className="settings-panel"><div><strong>Conta e segurança</strong><span>Para redefinir sua senha, use “Esqueci minha senha” na tela de entrada.</span></div><button className="secondary-button" onClick={signOut}><LogOut size={16} /> Sair da conta</button></div><div className="settings-panel"><div><strong>Seus dados</strong><span>Projetos e arquivos são salvos na nuvem e separados por conta.</span></div><span className="secure-pill"><Check size={14} /> Proteção ativa</span></div><div className="settings-panel ai-settings-panel"><div><strong>Recursos de IA</strong><span>Assistente de texto, geração de imagem e voz usam OPENAI_API_KEY. Música usa ELEVENLABS_API_KEY. Cadastre as chaves como Secrets das Edge Functions — nunca no frontend.</span></div><a className="secondary-button" href="https://supabase.com/dashboard/project/mkbvoltdkhmxsuztbjcd/functions/secrets" target="_blank" rel="noreferrer">Configurar chaves <ArrowRight size={15} /></a></div></section>
           ) : (
             <WorkspaceModule page={activePage as 'characters' | 'episodes' | 'scenes' | 'music' | 'library'} userId={session.user.id} projects={projects.map(project => ({ id: project.id, title: project.title }))} />
           )}
