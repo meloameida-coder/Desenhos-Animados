@@ -26,6 +26,6 @@ O projeto pode ser implantado em um host estático compatível com Vite, como Cl
 - Biblioteca de mídia com upload privado de imagens, áudios, vídeos e PDFs para Supabase Storage; acesso a arquivos com links temporários.
 - Recuperação de senha com fluxo de atualização de senha incluído.
 - Assistente de texto conectado à Edge Function `creative-assistant` para ajudar a criar descrições de personagens, sinopses, roteiros, cenas, prompts visuais e letras.
-- Geração de imagem conectada à Edge Function `creative-image`; as imagens são salvas no bucket privado e registradas na biblioteca.
+- Geração de imagem (`creative-image`) e voz/narração (`creative-voice`) conectadas a provedores de IA; os arquivos são salvos no bucket privado e registrados na biblioteca.
 - Para ativar os recursos de IA, cadastre `OPENAI_API_KEY` nos Secrets das Edge Functions do Supabase; a chave não deve ir para o frontend. Geração de voz, música e vídeo ainda depende de integrar e configurar provedores específicos e credenciais seguras.
 - O build automatizado está configurado no GitHub Actions; a compilação e a publicação ainda precisam ser verificadas no ambiente de execução.
