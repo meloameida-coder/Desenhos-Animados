@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { FileImage, LoaderCircle, Plus, Trash2, Users, BookOpen, Clapperboard, Music2 } from 'lucide-react'
+import { FileImage, LoaderCircle, Plus, Trash2, Users, BookOpen, Clapperboard, Music2, Pencil, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 type ProjectOption = { id: string; title: string }
@@ -64,6 +64,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [editingRow, setEditingRow] = useState<RowData | null>(null)
   const [error, setError] = useState('')
   const [selectedProject, setSelectedProject] = useState('all')
   const config = page === 'library' ? null : configs[page]
@@ -98,10 +99,13 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     }
     if (page === 'episodes') payload.status = 'draft'
     setSaving(true); setError('')
-    const { error: insertError } = await supabase.from(config.table).insert(payload)
+    const result = editingRow
+      ? await supabase.from(config.table).update(payload).eq('id', editingRow.id)
+      : await supabase.from(config.table).insert(payload)
     setSaving(false)
-    if (insertError) { setError('Não foi possível salvar: ' + insertError.message); return }
-    setShowForm(false)
+    if (result.error) { setError('Não foi possível salvar: ' + result.error.message); return }
+    setShowForm(false); setEditingRow(null)
+    window.dispatchEvent(new Event('creative-content-updated'))
     await loadRows()
   }
 
@@ -109,7 +113,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     if (!supabase || !config || !window.confirm('Excluir este item? Essa ação não pode ser desfeita.')) return
     const { error: deleteError } = await supabase.from(config.table).delete().eq('id', id)
     if (deleteError) setError('Não foi possível excluir: ' + deleteError.message)
-    else await loadRows()
+    else { window.dispatchEvent(new Event('creative-content-updated')); await loadRows() }
   }
 
   if (page === 'library') return <MediaLibrary userId={userId} projects={projects} />
@@ -121,8 +125,8 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     {projects.length === 0 && <div className="notice info-notice">Crie primeiro um projeto em “Meus projetos” para adicionar {config.singular === 'episódio' ? 'episódios' : config.singular === 'música' ? 'músicas' : config.singular === 'cena' ? 'cenas' : 'personagens'}.</div>}
     <div className="module-toolbar"><label>Projeto<select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}><option value="all">Todos os projetos</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label><span>{rows.length} {rows.length === 1 ? 'registro' : 'registros'}</span></div>
     {error && <div className="notice error-notice">{error}</div>}
-    {loading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando...</div> : rows.length ? <div className="module-list">{rows.map(row => <article className="module-row" key={row.id}><div className="module-row-icon"><Icon size={19} /></div><div className="module-row-copy"><strong>{config.display(row)}</strong><p>{config.description(row)}</p><span>{projectNames.get(String(row.project_id)) || 'Projeto'} · {row.created_at ? new Date(row.created_at).toLocaleDateString('pt-BR') : ''}{row.status ? ' · ' + String(row.status) : ''}</span></div><button className="icon-button module-delete" onClick={() => void deleteItem(row.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button></article>)}</div> : <div className="module-empty"><div className="module-empty-icon"><Icon size={25} /></div><h2>Nenhum {config.singular} por aqui ainda</h2><p>Adicione o primeiro registro e comece a organizar essa parte da sua criação.</p><button className="primary-button" onClick={() => setShowForm(true)} disabled={projects.length === 0}><Plus size={17} /> Criar {config.singular}</button></div>}
-    {showForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setShowForm(false) }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="module-form-title"><div className="modal-header"><div><span className="form-kicker">ADICIONAR AO ESTÚDIO</span><h2 id="module-form-title">Novo {config.singular}</h2><p>Os dados serão salvos na nuvem neste projeto.</p></div><button className="icon-button close-modal" onClick={() => setShowForm(false)} aria-label="Fechar">×</button></div><form className="project-form" onSubmit={createItem}><label>Projeto *<select name="project_id" defaultValue={selectedProject === 'all' ? '' : selectedProject} required><option value="" disabled>Escolha um projeto</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>{config.fields.map(field => <label key={field.name}>{field.label}{'required' in field && field.required ? ' *' : ''}{'multiline' in field && field.multiline ? <textarea name={field.name} rows={3} placeholder={field.placeholder} required={'required' in field && Boolean(field.required)} /> : <input name={field.name} type={'type' in field && field.type ? field.type : 'text'} placeholder={field.placeholder} required={'required' in field && Boolean(field.required)} min={field.name === 'episode_number' || field.name === 'scene_number' ? 1 : undefined} />}</label>)}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setShowForm(false)}>Cancelar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <LoaderCircle size={17} className="spin" /> : <Plus size={17} />} Salvar</button></div></form></section></div>}
+    {loading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando...</div> : rows.length ? <div className="module-list">{rows.map(row => <article className="module-row" key={row.id}><div className="module-row-icon"><Icon size={19} /></div><div className="module-row-copy"><strong>{config.display(row)}</strong><p>{config.description(row)}</p><span>{projectNames.get(String(row.project_id)) || 'Projeto'} · {row.created_at ? new Date(row.created_at).toLocaleDateString('pt-BR') : ''}{row.status ? ' · ' + String(row.status) : ''}</span></div><button className="icon-button" onClick={() => { setEditingRow(row); setShowForm(true) }} title="Editar" aria-label="Editar"><Pencil size={15} /></button><button className="icon-button module-delete" onClick={() => void deleteItem(row.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button></article>)}</div> : <div className="module-empty"><div className="module-empty-icon"><Icon size={25} /></div><h2>Nenhum {config.singular} por aqui ainda</h2><p>Adicione o primeiro registro e comece a organizar essa parte da sua criação.</p><button className="primary-button" onClick={() => setShowForm(true)} disabled={projects.length === 0}><Plus size={17} /> Criar {config.singular}</button></div>}
+    {showForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setShowForm(false) }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="module-form-title"><div className="modal-header"><div><span className="form-kicker">ADICIONAR AO ESTÚDIO</span><h2 id="module-form-title">{editingRow ? 'Editar ' + config.singular : 'Novo ' + config.singular}</h2><p>Os dados serão salvos na nuvem neste projeto.</p></div><button className="icon-button close-modal" onClick={() => { setShowForm(false); setEditingRow(null) }} aria-label="Fechar">×</button></div><form className="project-form" onSubmit={createItem}><label>Projeto *<select name="project_id" defaultValue={editingRow?.project_id || (selectedProject === 'all' ? '' : selectedProject)} required><option value="" disabled>Escolha um projeto</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>{config.fields.map(field => <label key={field.name}>{field.label}{'required' in field && field.required ? ' *' : ''}{'multiline' in field && field.multiline ? <textarea name={field.name} rows={3} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} /> : <input name={field.name} type={'type' in field && field.type ? field.type : 'text'} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} min={field.name === 'episode_number' || field.name === 'scene_number' ? 1 : undefined} />}</label>)}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => { setShowForm(false); setEditingRow(null) }}>Cancelar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <LoaderCircle size={17} className="spin" /> : editingRow ? <Check size={17} /> : <Plus size={17} />} {editingRow ? 'Salvar alterações' : 'Salvar'}</button></div></form></section></div>}
   </section>
 }
 
