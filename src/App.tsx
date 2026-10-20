@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import {
   Aperture, ArrowDownRight, ArrowRight, AudioLines, BookOpen, Check, ChevronDown,
   CircleHelp, Clapperboard, Clapperboard as Film, Compass, FileImage,
-  FolderKanban, LayoutDashboard, Lightbulb, LogOut, Menu, Music2, Plus, Search,
+  FolderKanban, LayoutDashboard, Lightbulb, LogOut, Menu, Music2, Plus, Search, Trash2,
   Settings2, Sparkles, Users, WandSparkles, X, LoaderCircle
 } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
@@ -56,6 +56,9 @@ export default function App() {
   const [projectError, setProjectError] = useState('')
   const [activePage, setActivePage] = useState('overview')
   const [showNewProject, setShowNewProject] = useState(false)
+  const [editingProject, setEditingProject] = useState<CreativeProject | null>(null)
+  const [savingChanges, setSavingChanges] = useState(false)
+  const [contentCounts, setContentCounts] = useState({ characters: 0, episodes: 0, songs: 0 })
   const [search, setSearch] = useState('')
   const [mobileNav, setMobileNav] = useState(false)
   const [savingProject, setSavingProject] = useState(false)
@@ -89,6 +92,22 @@ export default function App() {
   }, [user])
 
   useEffect(() => { void loadProjects() }, [loadProjects])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadContentCounts() {
+      if (!supabase || !user) { setContentCounts({ characters: 0, episodes: 0, songs: 0 }); return }
+      const [characters, episodes, songs] = await Promise.all([
+        supabase.from('characters').select('id', { count: 'exact', head: true }),
+        supabase.from('episodes').select('id', { count: 'exact', head: true }),
+        supabase.from('songs').select('id', { count: 'exact', head: true }),
+      ])
+      if (!cancelled) setContentCounts({ characters: characters.count ?? 0, episodes: episodes.count ?? 0, songs: songs.count ?? 0 })
+    }
+    void loadContentCounts()
+    return () => { cancelled = true }
+  }, [user, projects.length])
+
 
   async function handleAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -146,6 +165,37 @@ export default function App() {
     setShowNewProject(false)
     setActivePage('projects')
     await loadProjects()
+  }
+
+  async function updateProject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!supabase || !user || !editingProject) return
+    const form = new FormData(event.currentTarget)
+    const title = String(form.get('title') ?? '').trim()
+    if (!title) return
+    setSavingChanges(true); setProjectError('')
+    const { error } = await supabase.from('creative_projects').update({
+      title,
+      description: String(form.get('description') ?? '').trim() || null,
+      format: String(form.get('format') ?? 'series'),
+      genre: String(form.get('genre') ?? '').trim() || null,
+      visual_style: String(form.get('visual_style') ?? '').trim() || null,
+      status: String(form.get('status') ?? 'idea'),
+    }).eq('id', editingProject.id).eq('user_id', user.id)
+    setSavingChanges(false)
+    if (error) { setProjectError('Não foi possível atualizar o projeto: ' + error.message); return }
+    setEditingProject(null)
+    await loadProjects()
+  }
+
+  async function deleteProject(project: CreativeProject) {
+    if (!supabase || !user || !window.confirm('Excluir o projeto "' + project.title + '" e todo o conteúdo vinculado? Essa ação não pode ser desfeita.')) return
+    setProjectError('')
+    const { error } = await supabase.from('creative_projects').delete().eq('id', project.id).eq('user_id', user.id)
+    if (error) { setProjectError('Não foi possível excluir o projeto: ' + error.message); return }
+    setEditingProject(null)
+    await loadProjects()
+    setActivePage('projects')
   }
 
   const filteredProjects = useMemo(() => projects.filter(project =>
@@ -228,10 +278,10 @@ export default function App() {
             <>
               <section className="welcome-row"><div><div className="form-kicker">TERÇA-FEIRA CRIATIVA <span className="tiny-spark">✦</span></div><h1>Olá, {greeting} <span className="wave">✳</span></h1><p>Que tal transformar uma ideia em uma história hoje?</p></div><button className="primary-button" onClick={() => setShowNewProject(true)}><Plus size={18} /> Novo projeto</button></section>
               <section className="hero-banner"><div className="hero-content"><span className="hero-tag"><WandSparkles size={14} /> SEU PRÓXIMO UNIVERSO</span><h2>Toda história merece<br />sair do papel<span>.</span></h2><p>Organize suas ideias, crie personagens inesquecíveis e construa seu próprio mundo animado.</p><button className="hero-button" onClick={() => { setActivePage('projects'); if (projects.length === 0) setShowNewProject(true) }}>Explorar meus projetos <ArrowRight size={16} /></button></div><div className="hero-art" aria-hidden="true"><div className="hero-ring ring-a"></div><div className="hero-ring ring-b"></div><div className="hero-planet"></div><div className="hero-planet-small"></div><div className="hero-cloud cloud-a"></div><div className="hero-cloud cloud-b"></div><div className="hero-orbit-dot"></div><span className="hero-spark spark-a">✦</span><span className="hero-spark spark-b">✧</span><div className="floating-note"><Sparkles size={15} /> Ideias em movimento</div></div></section>
-              <section className="stats-grid"><StatCard icon={<FolderKanban size={19} />} label="Projetos criados" value={String(projects.length).padStart(2, '0')} note="Seu universo criativo" tone="lavender" /><StatCard icon={<Users size={19} />} label="Personagens" value="—" note="Dentro dos seus projetos" tone="peach" /><StatCard icon={<BookOpen size={19} />} label="Episódios" value="—" note="Histórias em construção" tone="mint" /><StatCard icon={<Music2 size={19} />} label="Músicas" value="—" note="Trilhas para suas histórias" tone="blue" /></section>
+              <section className="stats-grid"><StatCard icon={<FolderKanban size={19} />} label="Projetos criados" value={String(projects.length).padStart(2, '0')} note="Seu universo criativo" tone="lavender" /><StatCard icon={<Users size={19} />} label="Personagens" value={String(contentCounts.characters).padStart(2, "0")} note="Dentro dos seus projetos" tone="peach" /><StatCard icon={<BookOpen size={19} />} label="Episódios" value={String(contentCounts.episodes).padStart(2, "0")} note="Histórias em construção" tone="mint" /><StatCard icon={<Music2 size={19} />} label="Músicas" value={String(contentCounts.songs).padStart(2, "0")} note="Trilhas para suas histórias" tone="blue" /></section>
               <section className="section-heading"><div><h2>Projetos recentes</h2><p>Suas ideias mais recentes, todas em um só lugar.</p></div><button className="link-button" onClick={() => setActivePage('projects')}>Ver todos <ArrowRight size={15} /></button></section>
               {projectError && <div className="notice error-notice">{projectError}</div>}
-              {projectsLoading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando seus projetos...</div> : projects.length ? <div className="project-grid">{projects.slice(0, 3).map((project, i) => <ProjectCard key={project.id} project={project} index={i} onClick={() => { setActivePage('projects') }} />)}<button className="new-project-card" onClick={() => setShowNewProject(true)}><span className="new-project-icon"><Plus size={22} /></span><strong>Começar uma nova ideia</strong><span>Crie seu próximo projeto criativo</span></button></div> : <EmptyProjects onCreate={() => setShowNewProject(true)} />}
+              {projectsLoading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando seus projetos...</div> : projects.length ? <div className="project-grid">{projects.slice(0, 3).map((project, i) => <ProjectCard key={project.id} project={project} index={i} onClick={() => { setEditingProject(project) }} />)}<button className="new-project-card" onClick={() => setShowNewProject(true)}><span className="new-project-icon"><Plus size={22} /></span><strong>Começar uma nova ideia</strong><span>Crie seu próximo projeto criativo</span></button></div> : <EmptyProjects onCreate={() => setShowNewProject(true)} />}
               <section className="bottom-tip"><div className="tip-icon"><Lightbulb size={20} /></div><div><strong>Um pequeno passo já é criação.</strong><p>Comece com uma ideia simples. Você pode desenvolver personagens, episódios e cenas aos poucos.</p></div><ArrowDownRight className="tip-arrow" size={22} /></section>
             </>
           ) : activePage === 'projects' ? (
@@ -239,7 +289,7 @@ export default function App() {
               <section className="page-title-row"><div><div className="form-kicker">SEU UNIVERSO CRIATIVO</div><h1>Meus projetos</h1><p>Organize séries, curtas, filmes e clipes em um só lugar.</p></div><button className="primary-button" onClick={() => setShowNewProject(true)}><Plus size={18} /> Novo projeto</button></section>
               <div className="projects-toolbar"><div className="search-box"><Search size={17} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome ou gênero..." /></div><span className="result-count">{filteredProjects.length} {filteredProjects.length === 1 ? 'projeto' : 'projetos'}</span></div>
               {projectError && <div className="notice error-notice">{projectError}</div>}
-              {projectsLoading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando seus projetos...</div> : filteredProjects.length ? <div className="project-grid all-projects">{filteredProjects.map((project, i) => <ProjectCard key={project.id} project={project} index={i} onClick={() => setProjectError('A edição detalhada do projeto será a próxima etapa de desenvolvimento.')} />)}<button className="new-project-card" onClick={() => setShowNewProject(true)}><span className="new-project-icon"><Plus size={22} /></span><strong>Nova criação</strong><span>Uma ideia esperando para nascer</span></button></div> : <EmptyProjects onCreate={() => setShowNewProject(true)} filtered={search.length > 0} />}
+              {projectsLoading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando seus projetos...</div> : filteredProjects.length ? <div className="project-grid all-projects">{filteredProjects.map((project, i) => <ProjectCard key={project.id} project={project} index={i} onClick={() => setEditingProject(project)} />)}<button className="new-project-card" onClick={() => setShowNewProject(true)}><span className="new-project-icon"><Plus size={22} /></span><strong>Nova criação</strong><span>Uma ideia esperando para nascer</span></button></div> : <EmptyProjects onCreate={() => setShowNewProject(true)} filtered={search.length > 0} />}
             </>
           ) : activePage === 'settings' ? (
             <section className="placeholder-page"><div className="placeholder-icon"><Settings2 size={25} /></div><div className="form-kicker">PREFERÊNCIAS</div><h1>Configurações</h1><p>Você está conectado como <strong>{user.email}</strong>.</p><div className="settings-panel"><div><strong>Conta e segurança</strong><span>Autenticação gerenciada pelo Supabase.</span></div><button className="secondary-button" onClick={signOut}><LogOut size={16} /> Sair da conta</button></div><div className="settings-panel"><div><strong>Seus dados</strong><span>Seus projetos são salvos na nuvem e separados por conta.</span></div><span className="secure-pill"><Check size={14} /> Proteção ativa</span></div></section>
@@ -249,6 +299,7 @@ export default function App() {
           <footer className="page-footer"><span>traço. studio <span>·</span> Feito para imaginar</span><span><span className="footer-lock">●</span> Seus projetos são privados</span></footer>
         </div>
       </main>
+      {editingProject && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setEditingProject(null) }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="edit-project-title"><div className="modal-header"><div><span className="form-kicker">EDITAR PROJETO</span><h2 id="edit-project-title">{editingProject.title}</h2><p>Atualize os detalhes e o andamento da sua criação.</p></div><button className="icon-button close-modal" onClick={() => setEditingProject(null)} aria-label="Fechar"><X size={20} /></button></div><form onSubmit={updateProject} className="project-form"><label>Nome do projeto *<input name="title" defaultValue={editingProject.title} required maxLength={120} /></label><label>Formato<select name="format" defaultValue={editingProject.format}><option value="series">Série animada</option><option value="short">Short / vídeo curto</option><option value="film">Filme</option><option value="music_video">Clipe musical</option><option value="other">Outro projeto</option></select></label><label>Gênero ou tema<input name="genre" defaultValue={editingProject.genre ?? ''} maxLength={120} /></label><label>Estilo visual<input name="visual_style" defaultValue={editingProject.visual_style ?? ''} maxLength={120} /></label><label>Andamento<select name="status" defaultValue={editingProject.status}><option value="idea">Ideia</option><option value="in_development">Em desenvolvimento</option><option value="in_production">Em produção</option><option value="completed">Concluído</option><option value="archived">Arquivado</option></select></label><label>Descrição<textarea name="description" defaultValue={editingProject.description ?? ''} rows={3} maxLength={2000} /></label><div className="modal-actions modal-actions-split"><button type="button" className="danger-button" onClick={() => void deleteProject(editingProject)}><Trash2 size={16} /> Excluir projeto</button><div><button type="button" className="secondary-button" onClick={() => setEditingProject(null)}>Cancelar</button><button className="primary-button" type="submit" disabled={savingChanges}>{savingChanges ? <LoaderCircle size={17} className="spin" /> : <Check size={17} />} Salvar alterações</button></div></div></form></section></div>}
       {showNewProject && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setShowNewProject(false) }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="new-project-title"><div className="modal-header"><div><span className="form-kicker">PRIMEIRO PASSO</span><h2 id="new-project-title">Uma nova ideia</h2><p>Vamos dar forma à sua próxima criação.</p></div><button className="icon-button close-modal" onClick={() => setShowNewProject(false)} aria-label="Fechar"><X size={20} /></button></div><form onSubmit={createProject} className="project-form"><label>Nome do projeto *<input name="title" placeholder="Ex.: As aventuras de Luna" required maxLength={120} autoFocus /></label><label>Formato<select name="format" defaultValue="series"><option value="series">Série animada</option><option value="short">Short / vídeo curto</option><option value="film">Filme</option><option value="music_video">Clipe musical</option><option value="other">Outro projeto</option></select></label><label>Gênero ou tema<input name="genre" placeholder="Ex.: aventura, comédia, fantasia" maxLength={120} /></label><label>Estilo visual<input name="visual_style" placeholder="Ex.: 3D colorido, anime, desenho 2D" maxLength={120} /></label><label>Descrição inicial<textarea name="description" rows={3} placeholder="Qual é a ideia principal dessa história?" maxLength={2000} /></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setShowNewProject(false)}>Cancelar</button><button className="primary-button" type="submit" disabled={savingProject}>{savingProject ? <LoaderCircle size={17} className="spin" /> : <Plus size={17} />} Criar projeto</button></div></form></section></div>}
     </div>
   )
