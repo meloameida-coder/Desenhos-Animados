@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { FileImage, LoaderCircle, Plus, Trash2, Users, BookOpen, Clapperboard, Music2, Pencil, Check } from 'lucide-react'
+import { FileImage, LoaderCircle, Plus, Trash2, Users, BookOpen, Clapperboard, Music2, Pencil, Check, Sparkles } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 type ProjectOption = { id: string; title: string }
@@ -63,6 +63,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
   const [rows, setRows] = useState<RowData[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [generatingAI, setGeneratingAI] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingRow, setEditingRow] = useState<RowData | null>(null)
   const [error, setError] = useState('')
@@ -109,6 +110,38 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     await loadRows()
   }
 
+  async function generateWithAI(formElement: HTMLFormElement) {
+    if (!supabase || !config) return
+    const values = new FormData(formElement)
+    const task = String(values.get('ai_task') || '')
+    const projectId = String(values.get('project_id') || '')
+    const projectTitle = projects.find(project => project.id === projectId)?.title || 'Projeto sem título'
+    const targetByTask: Record<string, string> = {
+      character: 'description', synopsis: 'synopsis', script: 'script',
+      scene: 'action_description', image_prompt: 'image_prompt', video_prompt: 'video_prompt', lyrics: 'lyrics',
+    }
+    const targetName = targetByTask[task]
+    if (!targetName) { setError('Escolha o tipo de conteúdo que deseja criar com a IA.'); return }
+    const context: Record<string, string> = {}
+    for (const [key, value] of values.entries()) {
+      if (key !== 'ai_task' && key !== 'project_id') context[key] = String(value)
+    }
+    setGeneratingAI(true); setError('')
+    const { data, error: invokeError } = await supabase.functions.invoke('creative-assistant', {
+      body: { task, projectTitle, context },
+    })
+    setGeneratingAI(false)
+    if (invokeError) { setError(invokeError.message || 'Não foi possível acessar o assistente.'); return }
+    if (data?.error) { setError(String(data.error)); return }
+    if (typeof data?.text !== 'string') { setError('A IA não retornou conteúdo. Tente novamente.'); return }
+    const target = formElement.elements.namedItem(targetName)
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+      target.value = data.text
+      target.dispatchEvent(new Event('input', { bubbles: true }))
+      setError('')
+    } else setError('O campo de destino não foi encontrado. Você pode escrever o conteúdo manualmente.')
+  }
+
   async function deleteItem(id: string) {
     if (!supabase || !config || !window.confirm('Excluir este item? Essa ação não pode ser desfeita.')) return
     const { error: deleteError } = await supabase.from(config.table).delete().eq('id', id)
@@ -126,7 +159,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     <div className="module-toolbar"><label>Projeto<select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}><option value="all">Todos os projetos</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label><span>{rows.length} {rows.length === 1 ? 'registro' : 'registros'}</span></div>
     {error && <div className="notice error-notice">{error}</div>}
     {loading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando...</div> : rows.length ? <div className="module-list">{rows.map(row => <article className="module-row" key={row.id}><div className="module-row-icon"><Icon size={19} /></div><div className="module-row-copy"><strong>{config.display(row)}</strong><p>{config.description(row)}</p><span>{projectNames.get(String(row.project_id)) || 'Projeto'} · {row.created_at ? new Date(row.created_at).toLocaleDateString('pt-BR') : ''}{row.status ? ' · ' + String(row.status) : ''}</span></div><button className="icon-button" onClick={() => { setEditingRow(row); setShowForm(true) }} title="Editar" aria-label="Editar"><Pencil size={15} /></button><button className="icon-button module-delete" onClick={() => void deleteItem(row.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button></article>)}</div> : <div className="module-empty"><div className="module-empty-icon"><Icon size={25} /></div><h2>Nenhum {config.singular} por aqui ainda</h2><p>Adicione o primeiro registro e comece a organizar essa parte da sua criação.</p><button className="primary-button" onClick={() => setShowForm(true)} disabled={projects.length === 0}><Plus size={17} /> Criar {config.singular}</button></div>}
-    {showForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) { setShowForm(false); setEditingRow(null) } }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="module-form-title"><div className="modal-header"><div><span className="form-kicker">ADICIONAR AO ESTÚDIO</span><h2 id="module-form-title">{editingRow ? 'Editar ' + config.singular : 'Novo ' + config.singular}</h2><p>Os dados serão salvos na nuvem neste projeto.</p></div><button className="icon-button close-modal" onClick={() => { setShowForm(false); setEditingRow(null) }} aria-label="Fechar">×</button></div><form className="project-form" onSubmit={createItem}><label>Projeto *<select name="project_id" defaultValue={editingRow?.project_id || (selectedProject === 'all' ? '' : selectedProject)} required><option value="" disabled>Escolha um projeto</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>{config.fields.map(field => <label key={field.name}>{field.label}{'required' in field && field.required ? ' *' : ''}{'multiline' in field && field.multiline ? <textarea name={field.name} rows={3} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} /> : <input name={field.name} type={'type' in field && field.type ? field.type : 'text'} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} min={field.name === 'episode_number' || field.name === 'scene_number' ? 1 : undefined} />}</label>)}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => { setShowForm(false); setEditingRow(null) }}>Cancelar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <LoaderCircle size={17} className="spin" /> : editingRow ? <Check size={17} /> : <Plus size={17} />} {editingRow ? 'Salvar alterações' : 'Salvar'}</button></div></form></section></div>}
+    {showForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) { setShowForm(false); setEditingRow(null) } }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="module-form-title"><div className="modal-header"><div><span className="form-kicker">ADICIONAR AO ESTÚDIO</span><h2 id="module-form-title">{editingRow ? 'Editar ' + config.singular : 'Novo ' + config.singular}</h2><p>Os dados serão salvos na nuvem neste projeto.</p></div><button className="icon-button close-modal" onClick={() => { setShowForm(false); setEditingRow(null) }} aria-label="Fechar">×</button></div><form className="project-form" onSubmit={createItem}><div className="ai-assistant-row"><label>Assistente criativo<select name="ai_task" defaultValue={page === 'characters' ? 'character' : page === 'episodes' ? 'script' : page === 'scenes' ? 'scene' : 'lyrics'}>{page === 'characters' ? <option value="character">Criar descrição de personagem</option> : page === 'episodes' ? <><option value="script">Gerar roteiro</option><option value="synopsis">Gerar sinopse</option></> : page === 'scenes' ? <><option value="scene">Descrever a cena</option><option value="image_prompt">Criar prompt de imagem</option><option value="video_prompt">Criar prompt de vídeo</option></> : <option value="lyrics">Escrever letra de música</option>}</select></label><button type="button" className="secondary-button ai-generate-button" disabled={generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateWithAI(form) }}>{generatingAI ? <LoaderCircle size={16} className="spin" /> : <Sparkles size={16} />} {generatingAI ? 'Criando...' : 'Gerar com IA'}</button></div><label>Projeto *<select name="project_id" defaultValue={editingRow?.project_id || (selectedProject === 'all' ? '' : selectedProject)} required><option value="" disabled>Escolha um projeto</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>{config.fields.map(field => <label key={field.name}>{field.label}{'required' in field && field.required ? ' *' : ''}{'multiline' in field && field.multiline ? <textarea name={field.name} rows={3} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} /> : <input name={field.name} type={'type' in field && field.type ? field.type : 'text'} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} min={field.name === 'episode_number' || field.name === 'scene_number' ? 1 : undefined} />}</label>)}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => { setShowForm(false); setEditingRow(null) }}>Cancelar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <LoaderCircle size={17} className="spin" /> : editingRow ? <Check size={17} /> : <Plus size={17} />} {editingRow ? 'Salvar alterações' : 'Salvar'}</button></div></form></section></div>}
   </section>
 }
 
