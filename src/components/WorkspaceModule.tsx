@@ -127,13 +127,22 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
       if (key !== 'ai_task' && key !== 'project_id') context[key] = String(value)
     }
     setGeneratingAI(true); setError('')
+    const jobType = task === 'script' || task === 'synopsis' ? 'script' : task === 'lyrics' ? 'music' : task === 'image_prompt' ? 'image' : task === 'video_prompt' ? 'video' : 'other'
+    const prompt = task + ' · ' + projectTitle + ' · ' + JSON.stringify(context).slice(0, 1000)
+    const { data: job } = await supabase.from('generation_jobs').insert({
+      user_id: userId, project_id: projectId, job_type: jobType, provider: 'openai',
+      status: 'processing', prompt,
+    }).select('id').maybeSingle()
     const { data, error: invokeError } = await supabase.functions.invoke('creative-assistant', {
       body: { task, projectTitle, context },
     })
+    if (invokeError || data?.error || typeof data?.text !== 'string') {
+      const failure = data?.error ? String(data.error) : 'O assistente não respondeu. Verifique se OPENAI_API_KEY foi configurada nos Secrets das Edge Functions do Supabase. ' + (invokeError?.message || '')
+      if (job?.id) await supabase.from('generation_jobs').update({ status: 'failed', error_message: failure }).eq('id', job.id)
+      setGeneratingAI(false); setError(failure); return
+    }
+    if (job?.id) await supabase.from('generation_jobs').update({ status: 'completed', result: { text: data.text, model: data.model || 'gpt-4o-mini' } }).eq('id', job.id)
     setGeneratingAI(false)
-    if (invokeError) { setError(invokeError.message || 'Não foi possível acessar o assistente.'); return }
-    if (data?.error) { setError(String(data.error)); return }
-    if (typeof data?.text !== 'string') { setError('A IA não retornou conteúdo. Tente novamente.'); return }
     const target = formElement.elements.namedItem(targetName)
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
       target.value = data.text
