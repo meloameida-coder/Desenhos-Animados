@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { ArrowRight, FileImage, LoaderCircle, Plus, Trash2, Users, BookOpen, Clapperboard, Music2, FolderKanban } from 'lucide-react'
+import { FileImage, LoaderCircle, Plus, Trash2, Users, BookOpen, Clapperboard, Music2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 type ProjectOption = { id: string; title: string }
