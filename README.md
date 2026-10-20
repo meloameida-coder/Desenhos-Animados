@@ -18,6 +18,17 @@ npm run dev
 
 O projeto pode ser implantado em um host estático compatível com Vite, como Cloudflare Pages. Configure as mesmas variáveis de ambiente no painel do host e use `npm run build` como comando de build e `dist` como diretório de saída.
 
+## Publicar no Cloudflare Pages
+
+O workflow manual `Deploy to Cloudflare Pages` está em GitHub Actions. Para usá-lo uma vez:
+1. Crie um projeto Cloudflare Pages com o nome `desenhos-animados` (ou ajuste o nome no workflow).
+2. Em Settings → Secrets and variables → Actions, adicione `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`.
+3. O token Cloudflare precisa ter permissão para publicar Pages no account correto.
+4. Em Actions, execute manualmente `Deploy to Cloudflare Pages`.
+5. No Supabase Auth, adicione a URL final do site à lista de Redirect URLs para cadastro, confirmação de e-mail e recuperação de senha.
+
+A chave publishable do Supabase pode ser usada no frontend. Nunca use `service_role` nem coloque as chaves dos provedores de IA no GitHub.
+
 ## Situação atual
 
 - Login, cadastro e recuperação de senha pelo Supabase.
