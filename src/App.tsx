@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNo
 import type { Session } from '@supabase/supabase-js'
 import {
   Aperture, ArrowDownRight, ArrowRight, AudioLines, BookOpen, Check, ChevronDown,
-  CircleHelp, Clapperboard, Clapperboard as Film, Compass, FileImage, Film as FilmIcon,
+  CircleHelp, Clapperboard, Clapperboard as Film, Compass, FileImage,
   FolderKanban, LayoutDashboard, Lightbulb, LogOut, Menu, Music2, Plus, Search,
-  Settings2, Sparkles, Users, WandSparkles, X, Layers3, LoaderCircle
+  Settings2, Sparkles, Users, WandSparkles, X, LoaderCircle
 } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import WorkspaceModule from './components/WorkspaceModule'
 
 type CreativeProject = {
   id: string
@@ -243,7 +244,7 @@ export default function App() {
           ) : activePage === 'settings' ? (
             <section className="placeholder-page"><div className="placeholder-icon"><Settings2 size={25} /></div><div className="form-kicker">PREFERÊNCIAS</div><h1>Configurações</h1><p>Você está conectado como <strong>{user.email}</strong>.</p><div className="settings-panel"><div><strong>Conta e segurança</strong><span>Autenticação gerenciada pelo Supabase.</span></div><button className="secondary-button" onClick={signOut}><LogOut size={16} /> Sair da conta</button></div><div className="settings-panel"><div><strong>Seus dados</strong><span>Seus projetos são salvos na nuvem e separados por conta.</span></div><span className="secure-pill"><Check size={14} /> Proteção ativa</span></div></section>
           ) : (
-            <section className="placeholder-page"><div className="placeholder-icon"><Layers3 size={25} /></div><div className="form-kicker">ÁREA DE CRIAÇÃO</div><h1>{pageTitles[activePage] ?? 'Configurações'}</h1><p>Este espaço faz parte do seu estúdio. Estamos construindo as ferramentas para você desenvolver tudo com organização.</p><div className="coming-panel"><div className="coming-icon">{activePage === 'characters' ? <Users /> : activePage === 'episodes' ? <BookOpen /> : activePage === 'scenes' ? <FilmIcon /> : activePage === 'music' ? <Music2 /> : <FileImage />}</div><div><strong>Esta área está na próxima etapa</strong><span>Os dados e a estrutura já estão preparados. A interface de edição será implementada em seguida.</span></div><button className="secondary-button" onClick={() => setActivePage('projects')}>Voltar aos projetos <ArrowRight size={15} /></button></div></section>
+            <WorkspaceModule page={activePage as 'characters' | 'episodes' | 'scenes' | 'music' | 'library'} userId={user.id} projects={projects.map(project => ({ id: project.id, title: project.title }))} />
           )}
           <footer className="page-footer"><span>traço. studio <span>·</span> Feito para imaginar</span><span><span className="footer-lock">●</span> Seus projetos são privados</span></footer>
         </div>
