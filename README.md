@@ -5,8 +5,8 @@ Aplicação web em português para organizar projetos criativos de desenhos, per
 ## Rodar localmente
 
 1. Instale Node.js (versão LTS) e npm.
-2. Copie `.env.example` para `.env.local`.
-3. Preencha as variáveis com a URL do projeto Supabase e a chave pública (`VITE_SUPABASE_PUBLISHABLE_KEY`). Nunca use a chave `service_role` no navegador.
+2. Opcionalmente, copie `.env.example` para `.env.local` para sobrescrever a URL e a chave publishable padrão do projeto.
+3. Nunca use a chave `service_role` no navegador.
 4. Instale dependências e rode:
 
 ```bash
@@ -22,7 +22,7 @@ O projeto pode ser implantado em um host estático compatível com Vite, como Cl
 
 O workflow manual `Deploy to Cloudflare Pages` está em GitHub Actions. Para usá-lo uma vez:
 1. Crie um projeto Cloudflare Pages com o nome `desenhos-animados` (ou ajuste o nome no workflow).
-2. Em Settings → Secrets and variables → Actions, adicione `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`.
+2. Em Settings → Secrets and variables → Actions, adicione `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`. A URL e a chave publishable pública do Supabase já estão configuradas como valores padrão no app.
 3. O token Cloudflare precisa ter permissão para publicar Pages no account correto.
 4. Em Actions, execute manualmente `Deploy to Cloudflare Pages`.
 5. No Supabase Auth, adicione a URL final do site à lista de Redirect URLs para cadastro, confirmação de e-mail e recuperação de senha.
