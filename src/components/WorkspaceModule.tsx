@@ -113,7 +113,9 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
   }
 
   if (page === 'library') {
-    return <section className="workspace-page"><div className="page-title-row"><div><div className="form-kicker">SEUS ARQUIVOS</div><h1>Biblioteca de mídia</h1><p>Imagens, áudios, vídeos e referências do seu estúdio.</p></div></div><div className="module-empty"><div className="module-empty-icon"><FileImage size={25} /></div><h2>Biblioteca pronta para receber seus arquivos</h2><p>O banco já guarda os registros de mídia. O envio e armazenamento de arquivos será ativado depois de configurar o Storage e as permissões de upload.</p><div className="module-note">Nenhum arquivo foi enviado ainda.</div></div></section>
+    if (!config) return null
+
+  return <section className="workspace-page"><div className="page-title-row"><div><div className="form-kicker">SEUS ARQUIVOS</div><h1>Biblioteca de mídia</h1><p>Imagens, áudios, vídeos e referências do seu estúdio.</p></div></div><div className="module-empty"><div className="module-empty-icon"><FileImage size={25} /></div><h2>Biblioteca pronta para receber seus arquivos</h2><p>O banco já guarda os registros de mídia. O envio e armazenamento de arquivos será ativado depois de configurar o Storage e as permissões de upload.</p><div className="module-note">Nenhum arquivo foi enviado ainda.</div></div></section>
   }
 
   return <section className="workspace-page">
