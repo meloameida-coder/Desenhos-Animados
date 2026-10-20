@@ -44,7 +44,8 @@ const pageTitles: Record<string, string> = {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'reset'>('login')
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'reset' | 'update-password'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -71,7 +72,8 @@ export default function App() {
       setSession(data.session)
       setAuthLoading(false)
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'PASSWORD_RECOVERY') { setPasswordRecovery(true); setAuthMode('update-password') }
       setSession(nextSession)
       setAuthLoading(false)
     })
@@ -143,6 +145,12 @@ export default function App() {
         })
         if (error) throw error
         setAuthMessage('Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha.')
+      } else if (authMode === 'update-password') {
+        const { error } = await supabase.auth.updateUser({ password })
+        if (error) throw error
+        await supabase.auth.signOut()
+        setSession(null); setPasswordRecovery(false); setAuthMode('login'); setPassword('')
+        setAuthMessage('Senha atualizada. Entre com sua nova senha.')
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
@@ -236,7 +244,7 @@ export default function App() {
 
   if (!isSupabaseConfigured || !supabase) return <SetupScreen />
 
-  if (!session) return (
+  if (!session || passwordRecovery) return (
     <div className="auth-layout">
       <section className="auth-art">
         <div className="brand brand-light"><span className="brand-symbol"><Aperture size={23} /></span><span>traço<span className="brand-dot">.</span></span></div>
@@ -260,18 +268,18 @@ export default function App() {
         <div className="auth-top"><span>Já faz parte?</span><button className="text-button" onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthMessage(''); setAuthError('') }}>{authMode === 'login' ? 'Criar conta' : 'Entrar'}</button></div>
         <div className="auth-form-wrap">
           <div className="mobile-brand brand"><span className="brand-symbol"><Aperture size={23} /></span><span>traço<span className="brand-dot">.</span></span></div>
-          <div className="form-kicker">{authMode === 'reset' ? 'RECUPERE O ACESSO' : authMode === 'signup' ? 'COMECE SUA JORNADA' : 'BEM-VINDO DE VOLTA'}</div>
-          <h2>{authMode === 'reset' ? 'Redefina sua senha.' : authMode === 'signup' ? 'Vamos criar juntos.' : 'Entre no seu estúdio.'}</h2>
-          <p className="form-subtitle">{authMode === 'reset' ? 'Enviaremos um link para seu e-mail.' : authMode === 'signup' ? 'Crie sua conta e dê vida às suas ideias.' : 'Suas ideias e projetos esperam por você.'}</p>
+          <div className="form-kicker">{authMode === 'reset' ? 'RECUPERE O ACESSO' : authMode === 'update-password' ? 'NOVA SENHA' : authMode === 'signup' ? 'COMECE SUA JORNADA' : 'BEM-VINDO DE VOLTA'}</div>
+          <h2>{authMode === 'reset' ? 'Redefina sua senha.' : authMode === 'update-password' ? 'Escolha uma nova senha.' : authMode === 'signup' ? 'Vamos criar juntos.' : 'Entre no seu estúdio.'}</h2>
+          <p className="form-subtitle">{authMode === 'reset' ? 'Enviaremos um link para seu e-mail.' : authMode === 'update-password' ? 'Use uma senha nova com pelo menos 6 caracteres.' : authMode === 'signup' ? 'Crie sua conta e dê vida às suas ideias.' : 'Suas ideias e projetos esperam por você.'}</p>
           <form onSubmit={handleAuth} className="auth-form">
             {authMode === 'signup' && <label>Como podemos te chamar?<input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Seu nome" autoComplete="name" required /></label>}
-            <label>Seu e-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@exemplo.com" autoComplete="email" required /></label>
-            {authMode !== 'reset' && <label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="No mínimo 6 caracteres" minLength={6} autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} required /></label>}
+            {authMode !== 'update-password' && <label>Seu e-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@exemplo.com" autoComplete="email" required /></label>}
+            {authMode !== 'reset' && <label>{authMode === 'update-password' ? 'Nova senha' : 'Senha'}<input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="No mínimo 6 caracteres" minLength={6} autoComplete={authMode === 'login' ? 'current-password' : 'new-password'} required /></label>}
             {authMode === 'login' && <div className="forgot-row"><button type="button" className="text-button small" onClick={() => { setAuthMode('reset'); setAuthMessage(''); setAuthError('') }}>Esqueci minha senha</button></div>}
             {authError && <div className="notice error-notice">{authError}</div>}
             {authMessage && <div className="notice success-notice">{authMessage}</div>}
-            <button className="primary-button auth-submit" type="submit" disabled={authBusy}>{authBusy ? <LoaderCircle size={17} className="spin" /> : null}{authMode === 'reset' ? 'Enviar link' : authMode === 'signup' ? 'Criar minha conta' : 'Entrar no estúdio'} <ArrowRight size={17} /></button>
-            {authMode === 'reset' && <button type="button" className="back-login" onClick={() => { setAuthMode('login'); setAuthMessage(''); setAuthError('') }}>Voltar para o login</button>}
+            <button className="primary-button auth-submit" type="submit" disabled={authBusy}>{authBusy ? <LoaderCircle size={17} className="spin" /> : null}{authMode === 'reset' ? 'Enviar link' : authMode === 'update-password' ? 'Salvar nova senha' : authMode === 'signup' ? 'Criar minha conta' : 'Entrar no estúdio'} <ArrowRight size={17} /></button>
+            {(authMode === 'reset' || authMode === 'update-password') && <button type="button" className="back-login" onClick={() => { setAuthMode('login'); setPasswordRecovery(false); setAuthMessage(''); setAuthError('') }}>Voltar para o login</button>}
           </form>
           <div className="auth-legal"><span>Seus projetos são privados.</span><span>Protegido por autenticação segura.</span></div>
         </div>
