@@ -21,7 +21,9 @@ O projeto pode ser implantado em um host estático compatível com Vite, como Cl
 ## Situação atual
 
 - Login, cadastro e recuperação de senha pelo Supabase.
-- Projetos, personagens, episódios/roteiros, cenas e músicas com operações iniciais de criação, listagem e exclusão, respeitando as políticas RLS.
-- Biblioteca de mídia com estrutura visual pronta; upload real de arquivos depende da configuração do Supabase Storage.
-- Geração de imagem, voz, música e vídeo por IA ainda depende da escolha e configuração de provedores; a interface não simula que essas integrações estejam funcionando.
-- O build automatizado está configurado no GitHub Actions, mas deve ser confirmado após a primeira execução.
+- Projetos com criação, edição, status e exclusão de conteúdo vinculado.
+- Personagens, episódios/roteiros, cenas e músicas com criação, listagem, edição e exclusão, respeitando as políticas RLS.
+- Biblioteca de mídia com upload privado de imagens, áudios, vídeos e PDFs para Supabase Storage; acesso a arquivos com links temporários.
+- Recuperação de senha com fluxo de atualização de senha incluído.
+- Geração real de roteiro, imagens, voz, música e vídeo por IA ainda depende de configurar e testar provedores e credenciais seguras.
+- O build automatizado está configurado no GitHub Actions; a compilação e a publicação ainda precisam ser verificadas no ambiente de execução.
