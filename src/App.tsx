@@ -94,6 +94,22 @@ export default function App() {
   useEffect(() => { void loadProjects() }, [loadProjects])
 
   useEffect(() => {
+    const refreshCounts = () => {
+      if (!supabase || !user) return
+      void Promise.all([
+        supabase.from('characters').select('id', { count: 'exact', head: true }),
+        supabase.from('episodes').select('id', { count: 'exact', head: true }),
+        supabase.from('songs').select('id', { count: 'exact', head: true }),
+      ]).then(([characters, episodes, songs]) => setContentCounts({
+        characters: characters.count ?? 0, episodes: episodes.count ?? 0, songs: songs.count ?? 0,
+      }))
+    }
+    window.addEventListener('creative-content-updated', refreshCounts)
+    return () => window.removeEventListener('creative-content-updated', refreshCounts)
+  }, [user])
+
+
+  useEffect(() => {
     let cancelled = false
     async function loadContentCounts() {
       if (!supabase || !user) { setContentCounts({ characters: 0, episodes: 0, songs: 0 }); return }
