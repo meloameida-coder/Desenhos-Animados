@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import {
   Aperture, ArrowDownRight, ArrowRight, AudioLines, BookOpen, Check, ChevronDown,
-  CircleHelp, Clapperboard, Clapperboard as Film, Clock3, Compass, FileImage, Film as FilmIcon,
+  CircleHelp, Clapperboard, Clapperboard as Film, Compass, FileImage, Film as FilmIcon,
   FolderKanban, LayoutDashboard, Lightbulb, LogOut, Menu, Music2, Plus, Search,
   Settings2, Sparkles, Users, WandSparkles, X, Layers3, LoaderCircle
 } from 'lucide-react'
@@ -253,7 +253,7 @@ export default function App() {
   )
 }
 
-function StatCard({ icon, label, value, note, tone }: { icon: React.ReactNode; label: string; value: string; note: string; tone: string }) {
+function StatCard({ icon, label, value, note, tone }: { icon: ReactNode; label: string; value: string; note: string; tone: string }) {
   return <div className="stat-card"><div className={'stat-icon ' + tone}>{icon}</div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></div>
 }
 
