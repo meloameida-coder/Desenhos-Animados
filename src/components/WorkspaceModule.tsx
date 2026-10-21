@@ -247,14 +247,14 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     if (!prompt) { setError('Descreva a ação da cena ou preencha o prompt de vídeo.'); return }
     setGeneratingVideo(true); setError(''); setSuccessMessage('')
     const { data: job } = await supabase.from('generation_jobs').insert({
-      user_id: userId, project_id: projectId, job_type: 'video', provider: 'gemini',
+      user_id: userId, project_id: projectId, job_type: 'video', provider: 'mage',
       status: 'processing', prompt: prompt.slice(0, 1000),
     }).select('id').maybeSingle()
     const { data, error: invokeError } = await supabase.functions.invoke('creative-video', {
       body: { projectId, prompt, title: title ? title + ' — animação' : 'Vídeo animado', aspectRatio },
     })
     if (invokeError || data?.error || !data?.asset?.id) {
-      const failure = data?.error ? String(data.error) : 'Não foi possível gerar o vídeo. Configure GEMINI_API_KEY nos Secrets das Edge Functions do Supabase. ' + (invokeError?.message || '')
+      const failure = data?.error ? String(data.error) : 'Não foi possível gerar o vídeo. Verifique se MAGE_API_KEY está configurada nos Secrets das Edge Functions do Supabase. ' + (invokeError?.message || '')
       if (job?.id) await supabase.from('generation_jobs').update({ status: 'failed', error_message: failure }).eq('id', job.id)
       setGeneratingVideo(false); setError(failure); return
     }
