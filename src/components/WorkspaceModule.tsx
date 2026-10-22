@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 type ProjectOption = { id: string; title: string }
 type WorkspacePage = 'characters' | 'episodes' | 'scenes' | 'music' | 'library'
-type RowData = { id: string; project_id?: string; created_at?: string; name?: string; title?: string; role?: string; description?: string; personality?: string; appearance?: string; backstory?: string; synopsis?: string; script?: string; episode_number?: number; status?: string; scene_number?: number; action_description?: string; location?: string; image_prompt?: string; video_prompt?: string; purpose?: string; style?: string; lyrics?: string; music_prompt?: string; asset_type?: string; external_url?: string; storage_path?: string; [key: string]: unknown }
+type RowData = { id: string; project_id?: string; created_at?: string; name?: string; title?: string; role?: string; description?: string; personality?: string; appearance?: string; backstory?: string; reference_image_url?: string; synopsis?: string; script?: string; episode_number?: number; status?: string; scene_number?: number; action_description?: string; location?: string; image_prompt?: string; video_prompt?: string; purpose?: string; style?: string; lyrics?: string; music_prompt?: string; asset_type?: string; external_url?: string; storage_path?: string; [key: string]: unknown }
 
 const configs = {
   characters: {
@@ -71,6 +71,8 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
   const [editingRow, setEditingRow] = useState<RowData | null>(null)
   const [error, setError] = useState('')
   const [selectedProject, setSelectedProject] = useState('all')
+  const [referencePreview, setReferencePreview] = useState('')
+  const [selectedImagePreview, setSelectedImagePreview] = useState('')
   const config = page === 'library' ? null : configs[page]
   const Icon = config?.icon ?? FileImage
 
@@ -88,6 +90,21 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
 
   useEffect(() => { void loadRows() }, [loadRows])
 
+  useEffect(() => {
+    let cancelled = false
+    async function loadCharacterPreview() {
+      setReferencePreview('')
+      setSelectedImagePreview('')
+      const path = page === 'characters' ? String(editingRow?.reference_image_url || '') : ''
+      if (!path || !supabase) return
+      if (/^https?:\\/\\//i.test(path)) { setReferencePreview(path); return }
+      const { data, error: urlError } = await supabase.storage.from('creative-media').createSignedUrl(path, 3600)
+      if (!cancelled && !urlError && data?.signedUrl) setReferencePreview(data.signedUrl)
+    }
+    void loadCharacterPreview()
+    return () => { cancelled = true }
+  }, [editingRow, page])
+
   const projectNames = useMemo(() => new Map(projects.map(project => [project.id, project.title])), [projects])
 
   async function createItem(event: FormEvent<HTMLFormElement>) {
@@ -97,18 +114,43 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     const projectId = String(form.get('project_id') || '')
     if (!projectId) { setError('Escolha um projeto antes de salvar.'); return }
     const payload: Record<string, unknown> = { user_id: userId, project_id: projectId }
+    const imageInput = page === 'characters' ? form.elements.namedItem('character_image') as HTMLInputElement | null : null
+    const imageFile = imageInput?.files?.[0]
+    if (imageFile && !imageFile.type.startsWith('image/')) { setError('Escolha um arquivo de imagem válido.'); return }
+    if (imageFile && imageFile.size > 10 * 1024 * 1024) { setError('A imagem precisa ter no máximo 10 MB.'); return }
     for (const field of config.fields) {
       const value = String(form.get(field.name) ?? '').trim()
       if (value) payload[field.name] = ('type' in field && field.type === 'number') ? Number(value) : value
     }
     if (page === 'episodes') payload.status = 'draft'
     setSaving(true); setError('')
+    let uploadedImagePath = ''
+    if (page === 'characters' && imageFile) {
+      const projectFolder = projectId
+      const safeName = imageFile.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g, '-').slice(-80) || 'personagem'
+      uploadedImagePath = userId + '/' + projectFolder + '/characters/' + crypto.randomUUID() + '-' + safeName
+      const { error: uploadError } = await supabase.storage.from('creative-media').upload(uploadedImagePath, imageFile, { contentType: imageFile.type, upsert: false })
+      if (uploadError) {
+        setSaving(false)
+        setError('Não foi possível enviar a imagem: ' + uploadError.message)
+        return
+      }
+      payload.reference_image_url = uploadedImagePath
+    }
     const result = editingRow
       ? await supabase.from(config.table).update(payload).eq('id', editingRow.id)
       : await supabase.from(config.table).insert(payload)
     setSaving(false)
-    if (result.error) { setError('Não foi possível salvar: ' + result.error.message); return }
-    setShowForm(false); setEditingRow(null)
+    if (result.error) {
+      if (uploadedImagePath) await supabase.storage.from('creative-media').remove([uploadedImagePath])
+      setError('Não foi possível salvar: ' + result.error.message)
+      return
+    }
+    if (page === 'characters' && uploadedImagePath) {
+      const oldPath = String(editingRow?.reference_image_url || '')
+      if (oldPath && !/^https?:\\/\\//i.test(oldPath)) await supabase.storage.from('creative-media').remove([oldPath])
+    }
+    setShowForm(false); setEditingRow(null); setReferencePreview(''); setSelectedImagePreview('')
     window.dispatchEvent(new Event('creative-content-updated'))
     await loadRows()
   }
@@ -280,7 +322,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     <div className="module-toolbar"><label>Projeto<select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}><option value="all">Todos os projetos</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label><span>{rows.length} {rows.length === 1 ? 'registro' : 'registros'}</span></div>
     {error && <div className="notice error-notice">{error}</div>}
     {loading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando...</div> : rows.length ? <div className="module-list">{rows.map(row => <article className="module-row" key={row.id}><div className="module-row-icon"><Icon size={19} /></div><div className="module-row-copy"><strong>{config.display(row)}</strong><p>{config.description(row)}</p><span>{projectNames.get(String(row.project_id)) || 'Projeto'} · {row.created_at ? new Date(row.created_at).toLocaleDateString('pt-BR') : ''}{row.status ? ' · ' + String(row.status) : ''}</span></div><button className="icon-button" onClick={() => { setEditingRow(row); setShowForm(true) }} title="Editar" aria-label="Editar"><Pencil size={15} /></button><button className="icon-button module-delete" onClick={() => void deleteItem(row.id)} title="Excluir" aria-label="Excluir"><Trash2 size={16} /></button></article>)}</div> : <div className="module-empty"><div className="module-empty-icon"><Icon size={25} /></div><h2>Nenhum {config.singular} por aqui ainda</h2><p>Adicione o primeiro registro e comece a organizar essa parte da sua criação.</p><button className="primary-button" onClick={() => setShowForm(true)} disabled={projects.length === 0}><Plus size={17} /> Criar {config.singular}</button></div>}
-    {showForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) { setShowForm(false); setEditingRow(null) } }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="module-form-title"><div className="modal-header"><div><span className="form-kicker">ADICIONAR AO ESTÚDIO</span><h2 id="module-form-title">{editingRow ? 'Editar ' + config.singular : 'Novo ' + config.singular}</h2><p>Os dados serão salvos na nuvem neste projeto.</p></div><button className="icon-button close-modal" onClick={() => { setShowForm(false); setEditingRow(null) }} aria-label="Fechar">×</button></div><form className="project-form" onSubmit={createItem}><div className="ai-assistant-row"><label>Assistente criativo<select name="ai_task" defaultValue={page === 'characters' ? 'character' : page === 'episodes' ? 'script' : page === 'scenes' ? 'scene' : 'lyrics'}>{page === 'characters' ? <option value="character">Criar descrição de personagem</option> : page === 'episodes' ? <><option value="script">Gerar roteiro</option><option value="synopsis">Gerar sinopse</option></> : page === 'scenes' ? <><option value="scene">Descrever a cena</option><option value="image_prompt">Criar prompt de imagem</option><option value="video_prompt">Criar prompt de vídeo</option></> : <option value="lyrics">Escrever letra de música</option>}</select></label>{page === 'scenes' && <label>Formato do vídeo<select name="video_aspect" defaultValue="16:9"><option value="16:9">Paisagem (16:9)</option><option value="9:16">Vertical (9:16)</option></select></label>}<button type="button" className="secondary-button ai-generate-button" disabled={generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateWithAI(form) }}>{generatingAI ? <LoaderCircle size={16} className="spin" /> : <Sparkles size={16} />} {generatingAI ? 'Criando...' : 'Gerar com IA'}</button>{page === 'scenes' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingImage || generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateImageForScene(form) }}>{generatingImage ? <LoaderCircle size={16} className="spin" /> : <FileImage size={16} />} {generatingImage ? 'Gerando imagem...' : 'Gerar imagem'}</button>}{page === 'scenes' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingVideo || generatingImage || generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateVideoForScene(form) }}>{generatingVideo ? <LoaderCircle size={16} className="spin" /> : <Clapperboard size={16} />} {generatingVideo ? 'Gerando vídeo...' : 'Gerar vídeo'}</button>}{page === 'music' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateVoiceForSong(form) }}>{generatingAI ? <LoaderCircle size={16} className="spin" /> : <Music2 size={16} />} {generatingAI ? 'Gerando voz...' : 'Gerar voz'}</button>}{page === 'music' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateMusicForSong(form) }}>{generatingAI ? <LoaderCircle size={16} className="spin" /> : <AudioLines size={16} />} {generatingAI ? 'Gerando música...' : 'Gerar música'}</button>}</div>{successMessage && <div className="notice success-notice">{successMessage}</div>}{error && <div className="notice error-notice">{error}</div>}<label>Projeto *<select name="project_id" defaultValue={editingRow?.project_id || (selectedProject === 'all' ? '' : selectedProject)} required><option value="" disabled>Escolha um projeto</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>{config.fields.map(field => <label key={field.name}>{field.label}{'required' in field && field.required ? ' *' : ''}{'multiline' in field && field.multiline ? <textarea name={field.name} rows={3} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} /> : <input name={field.name} type={'type' in field && field.type ? field.type : 'text'} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} min={field.name === 'episode_number' || field.name === 'scene_number' ? 1 : undefined} />}</label>)}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => { setShowForm(false); setEditingRow(null) }}>Cancelar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <LoaderCircle size={17} className="spin" /> : editingRow ? <Check size={17} /> : <Plus size={17} />} {editingRow ? 'Salvar alterações' : 'Salvar'}</button></div></form></section></div>}
+    {showForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) { setShowForm(false); setEditingRow(null) } }}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="module-form-title"><div className="modal-header"><div><span className="form-kicker">ADICIONAR AO ESTÚDIO</span><h2 id="module-form-title">{editingRow ? 'Editar ' + config.singular : 'Novo ' + config.singular}</h2><p>Os dados serão salvos na nuvem neste projeto.</p></div><button className="icon-button close-modal" onClick={() => { setShowForm(false); setEditingRow(null) }} aria-label="Fechar">×</button></div><form className="project-form" onSubmit={createItem}><div className="ai-assistant-row"><label>Assistente criativo<select name="ai_task" defaultValue={page === 'characters' ? 'character' : page === 'episodes' ? 'script' : page === 'scenes' ? 'scene' : 'lyrics'}>{page === 'characters' ? <option value="character">Criar descrição de personagem</option> : page === 'episodes' ? <><option value="script">Gerar roteiro</option><option value="synopsis">Gerar sinopse</option></> : page === 'scenes' ? <><option value="scene">Descrever a cena</option><option value="image_prompt">Criar prompt de imagem</option><option value="video_prompt">Criar prompt de vídeo</option></> : <option value="lyrics">Escrever letra de música</option>}</select></label>{page === 'scenes' && <label>Formato do vídeo<select name="video_aspect" defaultValue="16:9"><option value="16:9">Paisagem (16:9)</option><option value="9:16">Vertical (9:16)</option></select></label>}<button type="button" className="secondary-button ai-generate-button" disabled={generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateWithAI(form) }}>{generatingAI ? <LoaderCircle size={16} className="spin" /> : <Sparkles size={16} />} {generatingAI ? 'Criando...' : 'Gerar com IA'}</button>{page === 'scenes' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingImage || generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateImageForScene(form) }}>{generatingImage ? <LoaderCircle size={16} className="spin" /> : <FileImage size={16} />} {generatingImage ? 'Gerando imagem...' : 'Gerar imagem'}</button>}{page === 'scenes' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingVideo || generatingImage || generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateVideoForScene(form) }}>{generatingVideo ? <LoaderCircle size={16} className="spin" /> : <Clapperboard size={16} />} {generatingVideo ? 'Gerando vídeo...' : 'Gerar vídeo'}</button>}{page === 'music' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateVoiceForSong(form) }}>{generatingAI ? <LoaderCircle size={16} className="spin" /> : <Music2 size={16} />} {generatingAI ? 'Gerando voz...' : 'Gerar voz'}</button>}{page === 'music' && <button type="button" className="secondary-button ai-generate-button" disabled={generatingAI || saving} onClick={e => { const form = e.currentTarget.form; if (form) void generateMusicForSong(form) }}>{generatingAI ? <LoaderCircle size={16} className="spin" /> : <AudioLines size={16} />} {generatingAI ? 'Gerando música...' : 'Gerar música'}</button>}</div>{successMessage && <div className="notice success-notice">{successMessage}</div>}{error && <div className="notice error-notice">{error}</div>}<label>Projeto *<select name="project_id" defaultValue={editingRow?.project_id || (selectedProject === 'all' ? '' : selectedProject)} required><option value="" disabled>Escolha um projeto</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>{page === 'characters' && <div className="character-image-field"><label>Imagem de referência da personagem<input name="character_image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e => { const file = e.currentTarget.files?.[0]; setSelectedImagePreview(file ? URL.createObjectURL(file) : '') }} /></label><p>Envie a imagem que você já tem da Moli. PNG, JPG, WEBP ou GIF, até 10 MB. Ela ficará salva na nuvem vinculada a esta personagem.</p>{(selectedImagePreview || referencePreview) && <div className="character-image-preview"><img src={selectedImagePreview || referencePreview} alt="Prévia da imagem de referência da personagem" /><span>{selectedImagePreview ? 'Nova imagem selecionada' : 'Imagem salva da personagem'}</span></div>}</div>}{config.fields.map(field => <label key={field.name}>{field.label}{'required' in field && field.required ? ' *' : ''}{'multiline' in field && field.multiline ? <textarea name={field.name} rows={3} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} /> : <input name={field.name} type={'type' in field && field.type ? field.type : 'text'} placeholder={field.placeholder} defaultValue={String(editingRow?.[field.name] ?? '')} required={'required' in field && Boolean(field.required)} min={field.name === 'episode_number' || field.name === 'scene_number' ? 1 : undefined} />}</label>)}<div className="modal-actions"><button type="button" className="secondary-button" onClick={() => { setShowForm(false); setEditingRow(null) }}>Cancelar</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <LoaderCircle size={17} className="spin" /> : editingRow ? <Check size={17} /> : <Plus size={17} />} {editingRow ? 'Salvar alterações' : 'Salvar'}</button></div></form></section></div>}
   </section>
 }
 
