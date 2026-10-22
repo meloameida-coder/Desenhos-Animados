@@ -97,7 +97,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
       setSelectedImagePreview('')
       const path = page === 'characters' ? String(editingRow?.reference_image_url || '') : ''
       if (!path || !supabase) return
-      if (/^https?:\\/\\//i.test(path)) { setReferencePreview(path); return }
+      if (path.startsWith('http://') || path.startsWith('https://')) { setReferencePreview(path); return }
       const { data, error: urlError } = await supabase.storage.from('creative-media').createSignedUrl(path, 3600)
       if (!cancelled && !urlError && data?.signedUrl) setReferencePreview(data.signedUrl)
     }
@@ -148,7 +148,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     }
     if (page === 'characters' && uploadedImagePath) {
       const oldPath = String(editingRow?.reference_image_url || '')
-      if (oldPath && !/^https?:\\/\\//i.test(oldPath)) await supabase.storage.from('creative-media').remove([oldPath])
+      if (oldPath && !oldPath.startsWith('http://') && !oldPath.startsWith('https://')) await supabase.storage.from('creative-media').remove([oldPath])
     }
     setShowForm(false); setEditingRow(null); setReferencePreview(''); setSelectedImagePreview('')
     window.dispatchEvent(new Event('creative-content-updated'))
