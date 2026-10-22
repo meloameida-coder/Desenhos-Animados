@@ -292,17 +292,48 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
       user_id: userId, project_id: projectId, job_type: 'video', provider: 'mage',
       status: 'processing', prompt: prompt.slice(0, 1000),
     }).select('id').maybeSingle()
-    const { data, error: invokeError } = await supabase.functions.invoke('creative-video', {
-      body: { projectId, prompt, title: title ? title + ' — animação' : 'Vídeo animado', aspectRatio },
-    })
-    if (invokeError || data?.error || !data?.asset?.id) {
-      const failure = data?.error ? String(data.error) : 'Não foi possível gerar o vídeo. Verifique se MAGE_API_KEY está configurada nos Secrets das Edge Functions do Supabase. ' + (invokeError?.message || '')
+    try {
+      const { data: started, error: startError } = await supabase.functions.invoke('creative-video', {
+        body: { projectId, prompt, title: title ? title + ' — animação' : 'Vídeo animado', aspectRatio },
+      })
+      if (startError || started?.error || !started?.statusUrl) {
+        const failure = started?.error ? String(started.error) : 'Não foi possível iniciar a geração do vídeo. ' + (startError?.message || '')
+        if (job?.id) await supabase.from('generation_jobs').update({ status: 'failed', error_message: failure }).eq('id', job.id)
+        setGeneratingVideo(false); setError(failure); return
+      }
+
+      let completedAsset: any = null
+      for (let attempt = 0; attempt < 90; attempt++) {
+        if (attempt > 0) await new Promise(resolve => setTimeout(resolve, 4000))
+        const { data: statusData, error: statusError } = await supabase.functions.invoke('creative-video-status', {
+          body: {
+            statusUrl: started.statusUrl, projectId: started.projectId, title: started.title,
+            prompt: started.prompt, aspectRatio: started.aspectRatio,
+          },
+        })
+        if (statusError || statusData?.error) {
+          const failure = statusData?.error ? String(statusData.error) : 'Não foi possível consultar a geração. ' + (statusError?.message || '')
+          if (job?.id) await supabase.from('generation_jobs').update({ status: 'failed', error_message: failure }).eq('id', job.id)
+          setGeneratingVideo(false); setError(failure); return
+        }
+        if (statusData?.status === 'completed' && statusData?.asset?.id) {
+          completedAsset = statusData.asset
+          break
+        }
+      }
+      if (!completedAsset) {
+        const failure = 'A geração ainda está demorando. O vídeo pode continuar sendo processado pela Mage; aguarde um pouco antes de tentar novamente.'
+        if (job?.id) await supabase.from('generation_jobs').update({ status: 'processing', error_message: failure }).eq('id', job.id)
+        setGeneratingVideo(false); setError(failure); return
+      }
+      if (job?.id) await supabase.from('generation_jobs').update({ status: 'completed', result: { asset_id: completedAsset.id, title: completedAsset.title } }).eq('id', job.id)
+      setGeneratingVideo(false)
+      setSuccessMessage('Vídeo animado gerado e salvo na Biblioteca de mídia.')
+    } catch (e) {
+      const failure = 'Não foi possível concluir a geração do vídeo. ' + (e instanceof Error ? e.message : '')
       if (job?.id) await supabase.from('generation_jobs').update({ status: 'failed', error_message: failure }).eq('id', job.id)
-      setGeneratingVideo(false); setError(failure); return
+      setGeneratingVideo(false); setError(failure)
     }
-    if (job?.id) await supabase.from('generation_jobs').update({ status: 'completed', result: { asset_id: data.asset.id, title: data.asset.title } }).eq('id', job.id)
-    setGeneratingVideo(false)
-    setSuccessMessage('Vídeo animado gerado e salvo na Biblioteca de mídia.')
   }
 
   async function deleteItem(id: string) {
