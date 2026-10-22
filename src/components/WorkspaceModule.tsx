@@ -114,7 +114,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     const projectId = String(form.get('project_id') || '')
     if (!projectId) { setError('Escolha um projeto antes de salvar.'); return }
     const payload: Record<string, unknown> = { user_id: userId, project_id: projectId }
-    const imageInput = page === 'characters' ? form.elements.namedItem('character_image') as HTMLInputElement | null : null
+    const imageInput = page === 'characters' ? event.currentTarget.elements.namedItem('character_image') as HTMLInputElement | null : null
     const imageFile = imageInput?.files?.[0]
     if (imageFile && !imageFile.type.startsWith('image/')) { setError('Escolha um arquivo de imagem válido.'); return }
     if (imageFile && imageFile.size > 10 * 1024 * 1024) { setError('A imagem precisa ter no máximo 10 MB.'); return }
