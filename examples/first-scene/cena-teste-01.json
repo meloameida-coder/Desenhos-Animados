@@ -1,0 +1,61 @@
+{
+  "id": "cena-teste-01",
+  "title": "A menina conhece o coelho",
+  "duration_seconds": 8,
+  "aspect_ratio": "16:9",
+  "language": "pt-BR",
+  "status": "draft",
+  "characters": [
+    {
+      "id": "menina-roxo",
+      "name": "Menina",
+      "visual_description": "Personagem infantil 3D, moletom roxo, jeans e tênis rosa; aparência consistente entre cenas."
+    },
+    {
+      "id": "coelho-cinza",
+      "name": "Coelho",
+      "visual_description": "Coelho pequeno cinza, orelhas rosadas, olhos expressivos e estilo de animação 3D infantil."
+    }
+  ],
+  "environment": {
+    "location": "Floresta ensolarada",
+    "visual_style": "animação 3D infantil cinematográfica, cores acolhedoras, iluminação suave de manhã",
+    "camera": "plano médio em altura dos personagens, leve aproximação suave, composição horizontal"
+  },
+  "timeline": [
+    {
+      "start_seconds": 0,
+      "end_seconds": 2,
+      "action": "A menina percebe o coelho e sorri; o coelho olha para ela."
+    },
+    {
+      "start_seconds": 2,
+      "end_seconds": 5,
+      "action": "A menina estende a mão com cuidado e fala em português brasileiro: Olá! Vamos brincar?"
+    },
+    {
+      "start_seconds": 5,
+      "end_seconds": 8,
+      "action": "O coelho pisca, mexe as orelhas e dá um pequeno salto feliz; a menina reage com alegria."
+    }
+  ],
+  "audio": {
+    "dialogue": [
+      {
+        "character_id": "menina-roxo",
+        "text": "Olá! Vamos brincar?",
+        "language": "pt-BR"
+      }
+    ],
+    "music": "música instrumental infantil suave, sem cobrir a fala",
+    "sound_effects": [
+      "pássaros suaves ao fundo",
+      "pequeno som de salto do coelho"
+    ]
+  },
+  "generation": {
+    "preferred_mode": "image-to-video",
+    "provider": null,
+    "note": "Não gerar automaticamente nem usar APIs pagas até selecionar e confirmar um provedor."
+  }
+}
