@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import WorkspaceModule from './components/WorkspaceModule'
+import HybridStudio from './components/HybridStudio'
 
 type CreativeProject = {
   id: string
@@ -33,12 +34,13 @@ const navItems = [
   { id: 'characters', label: 'Personagens', icon: Users },
   { id: 'episodes', label: 'Episódios e roteiros', icon: BookOpen },
   { id: 'scenes', label: 'Cenas e storyboard', icon: Clapperboard },
+  { id: 'hybrid', label: 'Estúdio de animação IA', icon: WandSparkles },
   { id: 'music', label: 'Músicas e áudio', icon: AudioLines },
   { id: 'library', label: 'Biblioteca de mídia', icon: FileImage },
 ]
 const pageTitles: Record<string, string> = {
   overview: 'Visão geral', projects: 'Meus projetos', characters: 'Personagens',
-  episodes: 'Episódios e roteiros', scenes: 'Cenas e storyboard', music: 'Músicas e áudio', library: 'Biblioteca de mídia',
+  episodes: 'Episódios e roteiros', scenes: 'Cenas e storyboard', music: 'Músicas e áudio', library: 'Biblioteca de mídia', hybrid: 'Estúdio de animação IA',
 }
 
 export default function App() {
@@ -326,7 +328,9 @@ export default function App() {
       <main className="main-area">
         <header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMobileNav(true)} aria-label="Abrir menu"><Menu size={21} /></button><div className="breadcrumbs"><span>Estúdio</span><span className="crumb-sep">/</span><strong>{pageTitles[activePage] ?? 'Configurações'}</strong></div><div className="topbar-right"><div className="status-chip"><span></span> Espaço privado</div><div className="top-avatar">{greeting.charAt(0).toUpperCase()}</div></div></header>
         <div className="page-content">
-          {activePage === 'overview' ? (
+          {activePage === 'hybrid' ? (
+            <HybridStudio />
+          ) : activePage === 'overview' ? (
             <>
               <section className="welcome-row"><div><div className="form-kicker">TERÇA-FEIRA CRIATIVA <span className="tiny-spark">✦</span></div><h1>Olá, {greeting} <span className="wave">✳</span></h1><p>Que tal transformar uma ideia em uma história hoje?</p></div><button className="primary-button" onClick={() => setShowNewProject(true)}><Plus size={18} /> Novo projeto</button></section>
               <section className="hero-banner"><div className="hero-content"><span className="hero-tag"><WandSparkles size={14} /> SEU PRÓXIMO UNIVERSO</span><h2>Toda história merece<br />sair do papel<span>.</span></h2><p>Organize suas ideias, crie personagens inesquecíveis e construa seu próprio mundo animado.</p><button className="hero-button" onClick={() => { setActivePage('projects'); if (projects.length === 0) setShowNewProject(true) }}>Explorar meus projetos <ArrowRight size={16} /></button></div><div className="hero-art" aria-hidden="true"><div className="hero-ring ring-a"></div><div className="hero-ring ring-b"></div><div className="hero-planet"></div><div className="hero-planet-small"></div><div className="hero-cloud cloud-a"></div><div className="hero-cloud cloud-b"></div><div className="hero-orbit-dot"></div><span className="hero-spark spark-a">✦</span><span className="hero-spark spark-b">✧</span><div className="floating-note"><Sparkles size={15} /> Ideias em movimento</div></div></section>
