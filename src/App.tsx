@@ -329,7 +329,7 @@ export default function App() {
         <header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMobileNav(true)} aria-label="Abrir menu"><Menu size={21} /></button><div className="breadcrumbs"><span>Estúdio</span><span className="crumb-sep">/</span><strong>{pageTitles[activePage] ?? 'Configurações'}</strong></div><div className="topbar-right"><div className="status-chip"><span></span> Espaço privado</div><div className="top-avatar">{greeting.charAt(0).toUpperCase()}</div></div></header>
         <div className="page-content">
           {activePage === 'hybrid' ? (
-            <HybridStudio />
+            <HybridStudio userId={session.user.id} projects={projects.map(project => ({ id: project.id, title: project.title }))} />
           ) : activePage === 'overview' ? (
             <>
               <section className="welcome-row"><div><div className="form-kicker">TERÇA-FEIRA CRIATIVA <span className="tiny-spark">✦</span></div><h1>Olá, {greeting} <span className="wave">✳</span></h1><p>Que tal transformar uma ideia em uma história hoje?</p></div><button className="primary-button" onClick={() => setShowNewProject(true)}><Plus size={18} /> Novo projeto</button></section>
