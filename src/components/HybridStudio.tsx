@@ -25,11 +25,52 @@ export default function HybridStudio({ userId, projects }: HybridStudioProps) {
   const [videoError, setVideoError] = useState('')
   const [sceneStatus, setSceneStatus] = useState('prepared')
   const [sceneNotes, setSceneNotes] = useState('')
+  const [sceneId, setSceneId] = useState('')
+  const [sceneSaving, setSceneSaving] = useState(false)
+  const [sceneSaveMessage, setSceneSaveMessage] = useState('')
+  const [sceneSaveError, setSceneSaveError] = useState('')
   const promptLength = useMemo(() => scenePrompt.length, [scenePrompt])
 
   useEffect(() => () => {
     if (imagePreview) URL.revokeObjectURL(imagePreview)
   }, [imagePreview])
+
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadScene() {
+      setSceneId('')
+      setSceneSaveMessage('')
+      setSceneSaveError('')
+      if (!supabase || !userId || !projectId) return
+      const { data, error } = await supabase.from('scenes').select('id,title,video_prompt,camera_notes').eq('project_id', projectId).eq('user_id', userId).eq('title', 'Uma nova amizade').order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (cancelled) return
+      if (error) { setSceneSaveError('Não foi possível carregar a cena salva: ' + error.message); return }
+      if (data) { setSceneId(data.id); if (data.video_prompt) setScenePrompt(data.video_prompt); if (data.camera_notes) setSceneNotes(data.camera_notes) }
+    }
+    void loadScene()
+    return () => { cancelled = true }
+  }, [projectId, userId])
+
+  async function saveScene() {
+    if (!supabase || !userId) { setSceneSaveError('Entre na sua conta para salvar a cena.'); return }
+    if (!projectId) { setSceneSaveError('Selecione um projeto antes de salvar a cena.'); return }
+    setSceneSaving(true); setSceneSaveError(''); setSceneSaveMessage('')
+    const payload = { user_id: userId, project_id: projectId, scene_number: 1, title: 'Uma nova amizade', location: 'Floresta ensolarada', action_description: 'Menina de moletom roxo encontra um coelho cinza e pergunta: “Olá! Vamos brincar?”', video_prompt: scenePrompt, duration_seconds: 8, camera_notes: sceneNotes.trim() || null }
+    try {
+      if (sceneId) {
+        const { error } = await supabase.from('scenes').update(payload).eq('id', sceneId).eq('user_id', userId).eq('project_id', projectId)
+        if (error) throw error
+      } else {
+        const { data, error } = await supabase.from('scenes').insert(payload).select('id').single()
+        if (error) throw error
+        if (data?.id) setSceneId(data.id)
+      }
+      setSceneSaveMessage('Cena salva no Supabase. Você pode continuar em outro dispositivo usando a mesma conta.')
+    } catch (error) {
+      setSceneSaveError(error instanceof Error ? 'Não foi possível salvar a cena: ' + error.message : 'Não foi possível salvar a cena.')
+    } finally { setSceneSaving(false) }
+  }
 
   async function copyPrompt() {
     try {
@@ -187,7 +228,7 @@ export default function HybridStudio({ userId, projects }: HybridStudioProps) {
       </select>
       <label className="hybrid-field-label hybrid-notes-label" htmlFor="hybrid-scene-notes">Anotações (opcional)</label>
       <textarea id="hybrid-scene-notes" value={sceneNotes} onChange={e => setSceneNotes(e.target.value)} rows={2} placeholder="Ex.: ajustar o movimento das orelhas ou refazer a fala."/>
-      <p className="hybrid-disclaimer">Por enquanto, o status e as anotações ficam apenas nesta tela e não são salvos ao sair. O envio de arquivos usa a biblioteca existente.</p>
+      <div className="hybrid-actions"><button type="button" className="primary-button" onClick={() => void saveScene()} disabled={sceneSaving || !projectId}><CloudUpload size={17}/>{sceneSaving ? "Salvando cena..." : sceneId ? "Atualizar cena salva" : "Salvar cena no projeto"}</button></div>{sceneSaveError && <div className="notice error-notice hybrid-upload-message">{sceneSaveError}</div>}{sceneSaveMessage && <div className="notice success-notice hybrid-upload-message">{sceneSaveMessage}</div>}<p className="hybrid-disclaimer">O prompt e as anotações de câmera são salvos na nuvem. O status de geração ainda é temporário e será persistido numa etapa própria.</p>
     </article>
     <div className="hybrid-work-grid">
       <article className="hybrid-panel"><div className="hybrid-panel-heading"><div className="module-empty-icon"><Film size={21}/></div><div><h2>Prompt da cena</h2><p>Edite o texto antes de copiar para o gerador de vídeo.</p></div></div><label className="hybrid-field-label" htmlFor="hybrid-scene-prompt">Descrição em inglês (costuma funcionar melhor em vários geradores)</label><textarea id="hybrid-scene-prompt" value={scenePrompt} onChange={e => { setScenePrompt(e.target.value); setCopied(false) }} rows={7}/><div className="hybrid-prompt-meta"><span>{promptLength} caracteres</span><span>Formato 16:9</span></div><div className="hybrid-actions"><button className="primary-button" onClick={() => void copyPrompt()}>{copied ? <Check size={17}/> : <Clipboard size={17}/>} {copied ? 'Prompt copiado' : 'Copiar prompt'}</button><button className="secondary-button" onClick={() => { setScenePrompt(initialScenePrompt); setCopied(false) }}>Restaurar original</button></div><div className="hybrid-negative"><strong>Prompt negativo opcional</strong><p>{negativePrompt}</p></div></article>
