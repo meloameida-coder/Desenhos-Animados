@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Clipboard, ExternalLink, Film, ImagePlus, LoaderCircle, Sparkles, X, CloudUpload } from 'lucide-react'
+import { Check, Clipboard, ExternalLink, Film, ImagePlus, Sparkles, X, CloudUpload } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 type ProjectOption = { id: string; title: string }
