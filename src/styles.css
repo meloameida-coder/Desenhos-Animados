@@ -47,3 +47,5 @@
 
 .hybrid-video-upload{border-top:1px solid var(--line);margin-top:22px;padding-top:22px}
 .hybrid-video-upload .hybrid-panel-heading{margin-bottom:14px}
+
+.hybrid-status-panel{margin-bottom:18px}.hybrid-status-panel .hybrid-notes-label{margin-top:15px}.hybrid-status-panel textarea{margin-top:0}
