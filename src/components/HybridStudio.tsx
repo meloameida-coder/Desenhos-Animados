@@ -43,10 +43,10 @@ export default function HybridStudio({ userId, projects }: HybridStudioProps) {
       setSceneSaveMessage('')
       setSceneSaveError('')
       if (!supabase || !userId || !projectId) return
-      const { data, error } = await supabase.from('scenes').select('id,title,video_prompt,camera_notes').eq('project_id', projectId).eq('user_id', userId).eq('title', 'Uma nova amizade').order('created_at', { ascending: false }).limit(1).maybeSingle()
+      const { data, error } = await supabase.from('scenes').select('id,title,video_prompt,camera_notes,generation_status').eq('project_id', projectId).eq('user_id', userId).eq('title', 'Uma nova amizade').order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (cancelled) return
       if (error) { setSceneSaveError('Não foi possível carregar a cena salva: ' + error.message); return }
-      if (data) { setSceneId(data.id); if (data.video_prompt) setScenePrompt(data.video_prompt); if (data.camera_notes) setSceneNotes(data.camera_notes) }
+      if (data) { setSceneId(data.id); if (data.video_prompt) setScenePrompt(data.video_prompt); if (data.camera_notes) setSceneNotes(data.camera_notes); if (data.generation_status) setSceneStatus(data.generation_status) }
     }
     void loadScene()
     return () => { cancelled = true }
@@ -56,7 +56,7 @@ export default function HybridStudio({ userId, projects }: HybridStudioProps) {
     if (!supabase || !userId) { setSceneSaveError('Entre na sua conta para salvar a cena.'); return }
     if (!projectId) { setSceneSaveError('Selecione um projeto antes de salvar a cena.'); return }
     setSceneSaving(true); setSceneSaveError(''); setSceneSaveMessage('')
-    const payload = { user_id: userId, project_id: projectId, scene_number: 1, title: 'Uma nova amizade', location: 'Floresta ensolarada', action_description: 'Menina de moletom roxo encontra um coelho cinza e pergunta: “Olá! Vamos brincar?”', video_prompt: scenePrompt, duration_seconds: 8, camera_notes: sceneNotes.trim() || null }
+    const payload = { user_id: userId, project_id: projectId, scene_number: 1, title: 'Uma nova amizade', location: 'Floresta ensolarada', action_description: 'Menina de moletom roxo encontra um coelho cinza e pergunta: “Olá! Vamos brincar?”', video_prompt: scenePrompt, duration_seconds: 8, camera_notes: sceneNotes.trim() || null, generation_status: sceneStatus }
     try {
       if (sceneId) {
         const { error } = await supabase.from('scenes').update(payload).eq('id', sceneId).eq('user_id', userId).eq('project_id', projectId)
