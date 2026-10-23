@@ -44,3 +44,6 @@
 .hybrid-save-button{width:100%;margin-top:12px;justify-content:center}
 .hybrid-save-button:disabled{opacity:.55;cursor:not-allowed}
 .hybrid-upload-message{margin-top:10px;font-size:12px;overflow-wrap:anywhere}
+
+.hybrid-video-upload{border-top:1px solid var(--line);margin-top:22px;padding-top:22px}
+.hybrid-video-upload .hybrid-panel-heading{margin-bottom:14px}
