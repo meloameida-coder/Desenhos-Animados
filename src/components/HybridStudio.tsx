@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Clipboard, ExternalLink, Film, ImagePlus, Sparkles, X, CloudUpload } from 'lucide-react'
+import { Check, Clipboard, ExternalLink, Film, ImagePlus, Sparkles, X, CloudUpload, Video } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 type ProjectOption = { id: string; title: string }
@@ -18,6 +18,11 @@ export default function HybridStudio({ userId, projects }: HybridStudioProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadMessage, setUploadMessage] = useState('')
   const [uploadError, setUploadError] = useState('')
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoName, setVideoName] = useState('')
+  const [videoUploading, setVideoUploading] = useState(false)
+  const [videoMessage, setVideoMessage] = useState('')
+  const [videoError, setVideoError] = useState('')
   const promptLength = useMemo(() => scenePrompt.length, [scenePrompt])
 
   useEffect(() => () => {
@@ -107,6 +112,68 @@ export default function HybridStudio({ userId, projects }: HybridStudioProps) {
     }
   }
 
+  function chooseVideo(file?: File) {
+    if (!file) return
+    if (!['video/mp4', 'video/webm'].includes(file.type)) {
+      setVideoError('Escolha um vídeo MP4 ou WEBM.')
+      return
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setVideoError('O vídeo deve ter no máximo 50 MB.')
+      return
+    }
+    setVideoError('')
+    setVideoMessage('')
+    setVideoFile(file)
+    setVideoName(file.name)
+  }
+
+  async function uploadVideo() {
+    if (!supabase || !userId) {
+      setVideoError('É necessário entrar na sua conta para salvar arquivos.')
+      return
+    }
+    if (!projectId) {
+      setVideoError('Selecione o projeto antes de enviar o vídeo.')
+      return
+    }
+    if (!videoFile) {
+      setVideoError('Escolha um vídeo antes de enviar.')
+      return
+    }
+    setVideoUploading(true)
+    setVideoError('')
+    setVideoMessage('')
+    const safeName = videoFile.name.normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '-').slice(-100) || 'cena'
+    const storagePath = userId + '/' + projectId + '/' + crypto.randomUUID() + '-' + safeName
+    try {
+      const { error: storageError } = await supabase.storage.from('creative-media').upload(storagePath, videoFile, {
+        contentType: videoFile.type,
+        upsert: false,
+      })
+      if (storageError) throw storageError
+      const { error: rowError } = await supabase.from('media_assets').insert({
+        user_id: userId,
+        project_id: projectId,
+        asset_type: 'video',
+        title: videoFile.name,
+        storage_path: storagePath,
+        mime_type: videoFile.type,
+        metadata: { size_bytes: videoFile.size, source: 'hybrid-studio-scene-video' },
+      })
+      if (rowError) {
+        await supabase.storage.from('creative-media').remove([storagePath])
+        throw rowError
+      }
+      setVideoMessage('Vídeo salvo na Biblioteca de mídia do projeto selecionado.')
+      window.dispatchEvent(new Event('creative-media-updated'))
+    } catch (error) {
+      setVideoError(error instanceof Error ? 'Não foi possível salvar o vídeo: ' + error.message : 'Não foi possível salvar o vídeo.')
+    } finally {
+      setVideoUploading(false)
+    }
+  }
+
   return <section className="workspace-page hybrid-studio-page">
     <div className="page-title-row"><div><div className="form-kicker">PRIMEIRO TESTE · SEM CUSTO AUTOMÁTICO</div><h1>Estúdio de animação IA</h1><p>Prepare a cena, personalize o prompt e salve imagens de referência na sua biblioteca. Nenhum pedido pago é enviado por esta tela.</p></div></div>
     <div className="hybrid-hero"><div className="hybrid-hero-art"><div className="hybrid-sun"/><div className="hybrid-hill hybrid-hill-back"/><div className="hybrid-hill hybrid-hill-front"/><div className="hybrid-tree tree-one"/><div className="hybrid-tree tree-two"/><div className="hybrid-girl"><span className="girl-head"/><span className="girl-body"/><span className="girl-leg leg-one"/><span className="girl-leg leg-two"/></div><div className="hybrid-rabbit"><span className="rabbit-ear rabbit-ear-one"/><span className="rabbit-ear rabbit-ear-two"/><span className="rabbit-head"/><span className="rabbit-body"/></div></div><div className="hybrid-hero-copy"><span className="hero-tag"><Sparkles size={14}/> CENA 01 · FLORESTA ENSOLARADA</span><h2>Uma nova amizade</h2><p>A menina de moletom roxo encontra um coelho cinza. Ela estende a mão e pergunta: “Olá! Vamos brincar?”</p><div className="hybrid-tags"><span>8 segundos</span><span>16:9 horizontal</span><span>Estilo 3D infantil</span></div></div></div>
@@ -116,8 +183,14 @@ export default function HybridStudio({ userId, projects }: HybridStudioProps) {
       <label className="hybrid-field-label" htmlFor="hybrid-project-select">Salvar no projeto</label><select id="hybrid-project-select" className="hybrid-project-select" value={projectId} onChange={e => setProjectId(e.target.value)}><option value="">Selecione um projeto...</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select>
       <button type="button" className="primary-button hybrid-save-button" onClick={() => void uploadReference()} disabled={uploading || !imageFile || !projectId}><CloudUpload size={17}/>{uploading ? 'Enviando para a nuvem...' : 'Salvar na Biblioteca'}</button>
       {uploadError && <div className="notice error-notice hybrid-upload-message">{uploadError}</div>}{uploadMessage && <div className="notice success-notice hybrid-upload-message">{uploadMessage}</div>}
+      <div className="hybrid-video-upload">
+        <div className="hybrid-panel-heading"><div className="module-empty-icon"><Video size={21}/></div><div><h2>Guardar vídeo gerado</h2><p>Depois de gerar e baixar a cena, envie o arquivo para a biblioteca do projeto.</p></div></div>
+        <label className="hybrid-upload-zone"><Video size={24}/><strong>{videoName || 'Escolher vídeo da cena'}</strong><span>MP4 ou WEBM · máximo 50 MB</span><input type="file" accept="video/mp4,video/webm" onChange={e => chooseVideo(e.target.files?.[0])}/></label>
+        <button type="button" className="primary-button hybrid-save-button" onClick={() => void uploadVideo()} disabled={videoUploading || !videoFile || !projectId}><CloudUpload size={17}/>{videoUploading ? 'Enviando vídeo...' : 'Salvar vídeo na Biblioteca'}</button>
+        {videoError && <div className="notice error-notice hybrid-upload-message">{videoError}</div>}{videoMessage && <div className="notice success-notice hybrid-upload-message">{videoMessage}</div>}
+      </div>
       <div className="hybrid-checklist"><strong>Antes de gerar</strong><span>✓ Use uma imagem de referência, se o gerador aceitar</span><span>✓ Selecione 16:9 horizontal</span><span>✓ Cole o prompt no campo da ferramenta</span><span>✓ Baixe o MP4 para guardar no projeto</span></div><a className="primary-button hybrid-open-link" href="https://wan2.video/" target="_blank" rel="noreferrer">Abrir Wan2.Video <ExternalLink size={16}/></a><p className="hybrid-disclaimer">A imagem só é enviada ao seu Supabase quando você clicar em “Salvar na Biblioteca”. A geração de vídeo continua manual e pode estar sujeita a limites da ferramenta externa.</p></article>
     </div>
-    <div className="notice info-notice hybrid-next-step"><strong>Próxima etapa:</strong> adicionar upload de vídeos MP4 e guardar o status de geração de cada cena.</div>
+    <div className="notice info-notice hybrid-next-step"><strong>Próxima etapa:</strong> registrar o status de cada cena e ligar a biblioteca ao acompanhamento do episódio.</div>
   </section>
 }
