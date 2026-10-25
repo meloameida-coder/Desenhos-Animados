@@ -100,7 +100,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
       if (meta?.format !== 'desenhos-animados-scene' || !Array.isArray(meta.layers) || meta.layers.length > 100) throw new Error('Formato de cena inválido.')
       const restored: Layer[] = []
       for (const item of meta.layers) {
-        if (typeof item.storage_path !== 'string' || !item.storage_path.startsWith(userId + '/' + saved.metadata?.project_id + '/')) throw new Error('A cena contém um caminho de imagem inválido. Nenhuma camada foi ignorada.')
+        if (typeof item.storage_path !== 'string' || !item.storage_path.startsWith(userId + '/' + projectId + '/')) throw new Error('A cena contém um caminho de imagem inválido. Nenhuma camada foi ignorada.')
         const { data, error } = await supabase.storage.from('creative-media').download(item.storage_path)
         if (error || !data) throw error ?? new Error('Não foi possível baixar uma camada.')
         const image = new Image()
