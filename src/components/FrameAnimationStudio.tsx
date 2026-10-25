@@ -44,6 +44,12 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
     setSavedScenes(((data ?? []) as SavedScene[]).filter(item => item.metadata?.format === 'desenhos-animados-scene' && Array.isArray(item.metadata?.layers)))
   }
 
+  useEffect(() => {
+    if (projects.length && !projects.some(project => project.id === projectId)) {
+      setProjectId(projects[0].id)
+    }
+  }, [projects, projectId])
+
   useEffect(() => { void refreshCloudScenes() }, [projectId, userId])
 
   async function saveCloudScene() {
