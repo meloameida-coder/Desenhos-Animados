@@ -177,6 +177,73 @@ export default function FrameAnimationStudio() {
     }
     playingRef.current = true; setPlaying(true); rafRef.current = requestAnimationFrame(tick)
   }
+
+  async function saveScene() {
+    try {
+      const savedLayers = layersRef.current.map(layer => {
+        const imageCanvas = document.createElement('canvas')
+        imageCanvas.width = layer.image.naturalWidth
+        imageCanvas.height = layer.image.naturalHeight
+        const imageContext = imageCanvas.getContext('2d')
+        if (!imageContext) throw new Error('Não foi possível preparar uma imagem.')
+        imageContext.drawImage(layer.image, 0, 0)
+        return { id: layer.id, name: layer.name, imageData: imageCanvas.toDataURL('image/png'), x: layer.x, y: layer.y, width: layer.width, height: layer.height, dx: layer.dx, dy: layer.dy, motion: layer.motion, visible: layer.visible }
+      })
+      const data = { format: 'desenhos-animados-scene', version: 1, duration, background, layers: savedLayers }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'minha-cena-animada.json'
+      link.click()
+      URL.revokeObjectURL(url)
+      setStatus('Cena salva em arquivo JSON com as imagens e posições. Guarde o arquivo para continuar depois.')
+    } catch {
+      setStatus('Não foi possível salvar a cena. Tente usar imagens menores ou menos camadas.')
+    }
+  }
+
+  async function loadScene(file: File | undefined) {
+    if (!file) return
+    try {
+      const data = JSON.parse(await file.text())
+      if (data?.format !== 'desenhos-animados-scene' || data.version !== 1 || !Array.isArray(data.layers)) throw new Error('Arquivo inválido')
+      const restored: Layer[] = []
+      for (const item of data.layers) {
+        if (typeof item.imageData !== 'string' || !item.imageData.startsWith('data:image/')) continue
+        const image = new Image()
+        await new Promise<void>((resolve, reject) => {
+          image.onload = () => resolve()
+          image.onerror = () => reject(new Error('Imagem inválida'))
+          image.src = item.imageData
+        })
+        if (!image.naturalWidth || !image.naturalHeight) continue
+        const motion: MotionStyle = ['deslizar', 'dançar', 'pular'].includes(item.motion) ? item.motion : 'deslizar'
+        restored.push({
+          id: crypto.randomUUID(),
+          name: typeof item.name === 'string' ? item.name.slice(0, 60) : 'Camada',
+          image,
+          x: Number.isFinite(item.x) ? Math.max(0, Math.min(W - 20, item.x)) : 0,
+          y: Number.isFinite(item.y) ? Math.max(0, Math.min(H - 20, item.y)) : 0,
+          width: Number.isFinite(item.width) ? Math.max(20, Math.min(W, item.width)) : Math.min(260, image.naturalWidth),
+          height: Number.isFinite(item.height) ? Math.max(20, Math.min(H, item.height)) : Math.min(300, image.naturalHeight),
+          dx: Number.isFinite(item.dx) ? item.dx : 0,
+          dy: Number.isFinite(item.dy) ? item.dy : 0,
+          motion,
+          visible: item.visible !== false
+        })
+      }
+      stopPlayback()
+      setLayers(restored)
+      setSelectedId(restored[0]?.id ?? '')
+      setDuration([4, 6, 8, 12].includes(data.duration) ? data.duration : 6)
+      setBackground(['campo', 'quarto', 'palco'].includes(data.background) ? data.background : 'campo')
+      setStatus('Cena recuperada com ' + restored.length + ' camada(s). Você pode continuar editando.')
+    } catch {
+      setStatus('Não consegui abrir esse arquivo. Escolha um JSON salvo pelo Editor de animação 2D.')
+    }
+  }
+
   const selected = layers.find(layer => layer.id === selectedId)
 
   return <section className="workspace-page">
@@ -185,7 +252,7 @@ export default function FrameAnimationStudio() {
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <label className="primary-button" style={{ cursor: 'pointer' }}><ImagePlus size={17} /> Importar imagens<input type="file" accept="image/png,image/webp,image/jpeg" multiple hidden onChange={e => { void importFiles(e.target.files); e.currentTarget.value = '' }} /></label>
         <button className="secondary-button" onClick={playing ? stopPlayback : startPlayback}>{playing ? <Pause size={16}/> : <Play size={16}/>} {playing ? 'Parar prévia' : 'Reproduzir prévia'}</button>
-        <button className="primary-button" onClick={exportVideo} disabled={recording}><Download size={16}/> {recording ? 'Exportando…' : 'Exportar vídeo WEBM'}</button>
+        <button className="secondary-button" onClick={() => void saveScene()}><Download size={16}/> Salvar cena (JSON)</button><label className="secondary-button" style={{ cursor: 'pointer' }}>Abrir cena<input type="file" accept="application/json,.json" hidden onChange={e => { void loadScene(e.target.files?.[0]); e.currentTarget.value = '' }} /></label><button className="primary-button" onClick={exportVideo} disabled={recording}><Download size={16}/> {recording ? 'Exportando…' : 'Exportar vídeo WEBM'}</button>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Duração <select value={duration} onChange={e => setDuration(Number(e.target.value))}><option value={4}>4 s</option><option value={6}>6 s</option><option value={8}>8 s</option><option value={12}>12 s</option></select></label><label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Cenário <select value={background} onChange={e => setBackground(e.target.value as BackgroundStyle)}><option value="campo">Campo</option><option value="quarto">Quarto</option><option value="palco">Palco musical</option></select></label>
       </div>
       <canvas ref={canvasRef} width={W} height={H} onPointerDown={pointerDown} style={{ width: '100%', display: 'block', borderRadius: 12, border: '1px solid #ddd9ee', cursor: playing ? 'default' : 'grab', touchAction: 'none' }} />
