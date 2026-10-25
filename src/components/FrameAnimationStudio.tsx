@@ -41,7 +41,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
       .eq('project_id', projectId).eq('user_id', userId).eq('asset_type', 'other')
       .order('created_at', { ascending: false })
     if (error) { setStatus('Não consegui listar as cenas na nuvem: ' + error.message); return }
-    setSavedScenes((data ?? []) as SavedScene[])
+    setSavedScenes(((data ?? []) as SavedScene[]).filter(item => item.metadata?.format === 'desenhos-animados-scene' && Array.isArray(item.metadata?.layers)))
   }
 
   useEffect(() => { void refreshCloudScenes() }, [projectId, userId])
