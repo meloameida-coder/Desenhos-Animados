@@ -38,7 +38,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
   async function refreshCloudScenes() {
     if (!supabase || !projectId) { setSavedScenes([]); return }
     const { data, error } = await supabase.from('media_assets').select('id,title,metadata,created_at')
-      .eq('project_id', projectId).eq('user_id', userId).eq('asset_type', 'animation_scene')
+      .eq('project_id', projectId).eq('user_id', userId).eq('asset_type', 'other')
       .order('created_at', { ascending: false })
     if (error) { setStatus('Não consegui listar as cenas na nuvem: ' + error.message); return }
     setSavedScenes((data ?? []) as SavedScene[])
@@ -72,7 +72,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
       }
       const title = 'Cena ' + new Date().toLocaleString('pt-BR')
       const { error: insertError } = await supabase.from('media_assets').insert({
-        user_id: userId, project_id: projectId, asset_type: 'animation_scene', title, mime_type: 'application/json',
+        user_id: userId, project_id: projectId, asset_type: 'other', title, storage_path: manifestLayers[0].storage_path, mime_type: 'application/json',
         metadata: { format: 'desenhos-animados-scene', version: 1, duration, background, layers: manifestLayers }
       })
       if (insertError) throw insertError
