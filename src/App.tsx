@@ -9,6 +9,7 @@ import {
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import WorkspaceModule from './components/WorkspaceModule'
 import HybridStudio from './components/HybridStudio'
+import FrameAnimationStudio from './components/FrameAnimationStudio'
 
 type CreativeProject = {
   id: string
@@ -35,12 +36,13 @@ const navItems = [
   { id: 'episodes', label: 'Episódios e roteiros', icon: BookOpen },
   { id: 'scenes', label: 'Cenas e storyboard', icon: Clapperboard },
   { id: 'hybrid', label: 'Estúdio de animação IA', icon: WandSparkles },
+  { id: 'frame-animation', label: 'Editor de animação 2D', icon: Film },
   { id: 'music', label: 'Músicas e áudio', icon: AudioLines },
   { id: 'library', label: 'Biblioteca de mídia', icon: FileImage },
 ]
 const pageTitles: Record<string, string> = {
   overview: 'Visão geral', projects: 'Meus projetos', characters: 'Personagens',
-  episodes: 'Episódios e roteiros', scenes: 'Cenas e storyboard', music: 'Músicas e áudio', library: 'Biblioteca de mídia', hybrid: 'Estúdio de animação IA',
+  episodes: 'Episódios e roteiros', scenes: 'Cenas e storyboard', music: 'Músicas e áudio', library: 'Biblioteca de mídia', hybrid: 'Estúdio de animação IA', 'frame-animation': 'Editor de animação 2D',
 }
 
 export default function App() {
@@ -328,7 +330,9 @@ export default function App() {
       <main className="main-area">
         <header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMobileNav(true)} aria-label="Abrir menu"><Menu size={21} /></button><div className="breadcrumbs"><span>Estúdio</span><span className="crumb-sep">/</span><strong>{pageTitles[activePage] ?? 'Configurações'}</strong></div><div className="topbar-right"><div className="status-chip"><span></span> Espaço privado</div><div className="top-avatar">{greeting.charAt(0).toUpperCase()}</div></div></header>
         <div className="page-content">
-          {activePage === 'hybrid' ? (
+          {activePage === 'frame-animation' ? (
+            <FrameAnimationStudio />
+          ) : activePage === 'hybrid' ? (
             <HybridStudio userId={session.user.id} projects={projects.map(project => ({ id: project.id, title: project.title }))} />
           ) : activePage === 'overview' ? (
             <>
