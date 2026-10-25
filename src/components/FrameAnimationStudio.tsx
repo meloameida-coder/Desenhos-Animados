@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ImagePlus, Play, Pause, Download, Trash2, Move, Info, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react'
 
 type MotionStyle = 'deslizar' | 'dançar' | 'pular'
+type BackgroundStyle = 'campo' | 'quarto' | 'palco'
 type Layer = { id: string; name: string; image: HTMLImageElement; x: number; y: number; width: number; height: number; dx: number; dy: number; motion: MotionStyle; visible: boolean }
 const W = 960
 const H = 540
@@ -17,11 +18,12 @@ export default function FrameAnimationStudio() {
   const [layers, setLayers] = useState<Layer[]>([])
   const [playing, setPlaying] = useState(false)
   const [duration, setDuration] = useState(6)
+  const [background, setBackground] = useState<BackgroundStyle>('campo')
   const [status, setStatus] = useState('Importe imagens PNG transparentes separadas para começar.')
   const [selectedId, setSelectedId] = useState('')
   const [recording, setRecording] = useState(false)
 
-  useEffect(() => { layersRef.current = layers; draw(0) }, [layers])
+  useEffect(() => { layersRef.current = layers; draw(0) }, [layers, background])
   useEffect(() => () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); recorderRef.current?.stop() }, [])
 
   function draw(elapsed: number) {
@@ -29,12 +31,29 @@ export default function FrameAnimationStudio() {
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
     ctx.clearRect(0, 0, W, H)
-    const sky = ctx.createLinearGradient(0, 0, 0, H)
-    sky.addColorStop(0, '#c7eaff'); sky.addColorStop(1, '#fff1ce')
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H)
-    ctx.fillStyle = '#a8dba0'; ctx.beginPath(); ctx.ellipse(210, 510, 380, 160, 0, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = '#72bd82'; ctx.beginPath(); ctx.ellipse(730, 535, 430, 190, 0, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = '#f6d477'; ctx.beginPath(); ctx.arc(820, 95, 42, 0, Math.PI * 2); ctx.fill()
+    if (background === 'campo') {
+      const sky = ctx.createLinearGradient(0, 0, 0, H)
+      sky.addColorStop(0, '#c7eaff'); sky.addColorStop(1, '#fff1ce')
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H)
+      ctx.fillStyle = '#a8dba0'; ctx.beginPath(); ctx.ellipse(210, 510, 380, 160, 0, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#72bd82'; ctx.beginPath(); ctx.ellipse(730, 535, 430, 190, 0, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#f6d477'; ctx.beginPath(); ctx.arc(820, 95, 42, 0, Math.PI * 2); ctx.fill()
+    } else if (background === 'quarto') {
+      ctx.fillStyle = '#f4dff5'; ctx.fillRect(0, 0, W, H)
+      ctx.fillStyle = '#e6bfe8'; ctx.fillRect(0, 0, W, 350)
+      ctx.fillStyle = '#f4c9a3'; ctx.fillRect(0, 350, W, 190)
+      ctx.fillStyle = '#b6e0f2'; ctx.fillRect(85, 75, 190, 150)
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.strokeRect(85, 75, 190, 150)
+      ctx.fillStyle = '#dca6cf'; ctx.fillRect(620, 285, 220, 170)
+      ctx.fillStyle = '#fff0a8'; ctx.fillRect(600, 270, 260, 30)
+    } else {
+      ctx.fillStyle = '#211d48'; ctx.fillRect(0, 0, W, H)
+      ctx.fillStyle = '#673e88'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(180, 0); ctx.lineTo(310, H); ctx.lineTo(0, H); ctx.fill()
+      ctx.beginPath(); ctx.moveTo(W, 0); ctx.lineTo(W - 180, 0); ctx.lineTo(W - 310, H); ctx.lineTo(W, H); ctx.fill()
+      ctx.fillStyle = '#f6d477'
+      for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(140 + i * 110, 90 + (i % 2) * 22, 4, 0, Math.PI * 2); ctx.fill() }
+      ctx.fillStyle = '#3a3268'; ctx.fillRect(0, 420, W, 120)
+    }
     for (const layer of layersRef.current) {
       if (!layer.visible) continue
       const phase = elapsed * 2 + parseInt(layer.id.slice(-2), 16)
@@ -160,7 +179,7 @@ export default function FrameAnimationStudio() {
         <label className="primary-button" style={{ cursor: 'pointer' }}><ImagePlus size={17} /> Importar imagens<input type="file" accept="image/png,image/webp,image/jpeg" multiple hidden onChange={e => { void importFiles(e.target.files); e.currentTarget.value = '' }} /></label>
         <button className="secondary-button" onClick={playing ? stopPlayback : startPlayback}>{playing ? <Pause size={16}/> : <Play size={16}/>} {playing ? 'Parar prévia' : 'Reproduzir prévia'}</button>
         <button className="primary-button" onClick={exportVideo} disabled={recording}><Download size={16}/> {recording ? 'Exportando…' : 'Exportar vídeo WEBM'}</button>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Duração <select value={duration} onChange={e => setDuration(Number(e.target.value))}><option value={4}>4 s</option><option value={6}>6 s</option><option value={8}>8 s</option><option value={12}>12 s</option></select></label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Duração <select value={duration} onChange={e => setDuration(Number(e.target.value))}><option value={4}>4 s</option><option value={6}>6 s</option><option value={8}>8 s</option><option value={12}>12 s</option></select></label><label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Cenário <select value={background} onChange={e => setBackground(e.target.value as BackgroundStyle)}><option value="campo">Campo</option><option value="quarto">Quarto</option><option value="palco">Palco musical</option></select></label>
       </div>
       <canvas ref={canvasRef} width={W} height={H} onPointerDown={pointerDown} style={{ width: '100%', display: 'block', borderRadius: 12, border: '1px solid #ddd9ee', cursor: playing ? 'default' : 'grab', touchAction: 'none' }} />
       <p style={{ color: '#686579', fontSize: 13, marginBottom: 0 }}>Dica: importe personagens em PNG com fundo transparente, de preferência um arquivo por personagem ou parte do corpo. Arraste cada camada diretamente na cena.</p>
