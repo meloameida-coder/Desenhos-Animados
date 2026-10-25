@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Film, ImagePlus, Play, Pause, Download, Trash2, Move, Info } from 'lucide-react'
+import { ImagePlus, Play, Pause, Download, Trash2, Move, Info } from 'lucide-react'
 
 type Layer = { id: string; name: string; image: HTMLImageElement; x: number; y: number; width: number; height: number; dx: number; dy: number }
 const W = 960
@@ -35,7 +35,7 @@ export default function FrameAnimationStudio() {
     ctx.fillStyle = '#72bd82'; ctx.beginPath(); ctx.ellipse(730, 535, 430, 190, 0, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#f6d477'; ctx.beginPath(); ctx.arc(820, 95, 42, 0, Math.PI * 2); ctx.fill()
     for (const layer of layersRef.current) {
-      const sway = elapsed > 0 ? Math.sin(elapsed * 2 + Number(layer.id.slice(-2), 16)) * 7 : 0
+      const sway = elapsed > 0 ? Math.sin(elapsed * 2 + parseInt(layer.id.slice(-2), 16)) * 7 : 0
       const x = layer.x + (playingRef.current ? layer.dx * elapsed : 0)
       const y = layer.y + (playingRef.current ? layer.dy * elapsed : 0) + sway
       ctx.drawImage(layer.image, x, y, layer.width, layer.height)
