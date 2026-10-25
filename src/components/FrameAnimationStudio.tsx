@@ -196,7 +196,7 @@ export default function FrameAnimationStudio() {
       link.href = url
       link.download = 'minha-cena-animada.json'
       link.click()
-      URL.revokeObjectURL(url)
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
       setStatus('Cena salva em arquivo JSON com as imagens e posições. Guarde o arquivo para continuar depois.')
     } catch {
       setStatus('Não foi possível salvar a cena. Tente usar imagens menores ou menos camadas.')
@@ -206,8 +206,9 @@ export default function FrameAnimationStudio() {
   async function loadScene(file: File | undefined) {
     if (!file) return
     try {
+      if (file.size > 50 * 1024 * 1024) throw new Error('Arquivo muito grande')
       const data = JSON.parse(await file.text())
-      if (data?.format !== 'desenhos-animados-scene' || data.version !== 1 || !Array.isArray(data.layers)) throw new Error('Arquivo inválido')
+      if (data?.format !== 'desenhos-animados-scene' || data.version !== 1 || !Array.isArray(data.layers) || data.layers.length > 100) throw new Error('Arquivo inválido')
       const restored: Layer[] = []
       for (const item of data.layers) {
         if (typeof item.imageData !== 'string' || !item.imageData.startsWith('data:image/')) continue
@@ -223,15 +224,18 @@ export default function FrameAnimationStudio() {
           id: crypto.randomUUID(),
           name: typeof item.name === 'string' ? item.name.slice(0, 60) : 'Camada',
           image,
-          x: Number.isFinite(item.x) ? Math.max(0, Math.min(W - 20, item.x)) : 0,
-          y: Number.isFinite(item.y) ? Math.max(0, Math.min(H - 20, item.y)) : 0,
+          x: 0,
+          y: 0,
           width: Number.isFinite(item.width) ? Math.max(20, Math.min(W, item.width)) : Math.min(260, image.naturalWidth),
           height: Number.isFinite(item.height) ? Math.max(20, Math.min(H, item.height)) : Math.min(300, image.naturalHeight),
-          dx: Number.isFinite(item.dx) ? item.dx : 0,
-          dy: Number.isFinite(item.dy) ? item.dy : 0,
+          dx: Number.isFinite(item.dx) ? Math.max(-500, Math.min(500, item.dx)) : 0,
+          dy: Number.isFinite(item.dy) ? Math.max(-500, Math.min(500, item.dy)) : 0,
           motion,
           visible: item.visible !== false
         })
+        const restoredLayer = restored[restored.length - 1]
+        restoredLayer.x = Number.isFinite(item.x) ? Math.max(0, Math.min(W - restoredLayer.width, item.x)) : 0
+        restoredLayer.y = Number.isFinite(item.y) ? Math.max(0, Math.min(H - restoredLayer.height, item.y)) : 0
       }
       stopPlayback()
       setLayers(restored)
