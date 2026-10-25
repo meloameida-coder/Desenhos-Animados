@@ -100,13 +100,14 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
       if (meta?.format !== 'desenhos-animados-scene' || !Array.isArray(meta.layers) || meta.layers.length > 100) throw new Error('Formato de cena inválido.')
       const restored: Layer[] = []
       for (const item of meta.layers) {
-        if (typeof item.storage_path !== 'string' || !item.storage_path.startsWith(userId + '/')) continue
+        if (typeof item.storage_path !== 'string' || !item.storage_path.startsWith(userId + '/' + saved.metadata?.project_id + '/')) throw new Error('A cena contém um caminho de imagem inválido. Nenhuma camada foi ignorada.')
         const { data, error } = await supabase.storage.from('creative-media').download(item.storage_path)
         if (error || !data) throw error ?? new Error('Não foi possível baixar uma camada.')
         const image = new Image()
         const objectUrl = URL.createObjectURL(data)
-        await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('Imagem inválida')); image.src = objectUrl })
-        URL.revokeObjectURL(objectUrl)
+        try {
+          await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('Imagem inválida')); image.src = objectUrl })
+        } finally { URL.revokeObjectURL(objectUrl) }
         const width = Number.isFinite(item.width) ? Math.max(20, Math.min(W, item.width)) : Math.min(260, image.naturalWidth)
         const height = Number.isFinite(item.height) ? Math.max(20, Math.min(H, item.height)) : Math.min(300, image.naturalHeight)
         restored.push({ id: crypto.randomUUID(), name: typeof item.name === 'string' ? item.name.slice(0, 60) : 'Camada', image,
@@ -116,6 +117,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
           dy: Number.isFinite(item.dy) ? Math.max(-500, Math.min(500, item.dy)) : 0,
           motion: ['parado', 'deslizar', 'dançar', 'pular'].includes(item.motion) ? item.motion : 'deslizar', visible: item.visible !== false })
       }
+      if (restored.length !== meta.layers.length) throw new Error('A cena não pôde ser restaurada por completo.')
       stopPlayback()
       setLayers(restored)
       setSelectedId(restored[0]?.id ?? '')
