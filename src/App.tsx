@@ -331,7 +331,7 @@ export default function App() {
         <header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMobileNav(true)} aria-label="Abrir menu"><Menu size={21} /></button><div className="breadcrumbs"><span>Estúdio</span><span className="crumb-sep">/</span><strong>{pageTitles[activePage] ?? 'Configurações'}</strong></div><div className="topbar-right"><div className="status-chip"><span></span> Espaço privado</div><div className="top-avatar">{greeting.charAt(0).toUpperCase()}</div></div></header>
         <div className="page-content">
           {activePage === 'frame-animation' ? (
-            <FrameAnimationStudio />
+            <FrameAnimationStudio userId={session.user.id} projects={projects.map(project => ({ id: project.id, title: project.title }))} />
           ) : activePage === 'hybrid' ? (
             <HybridStudio userId={session.user.id} projects={projects.map(project => ({ id: project.id, title: project.title }))} />
           ) : activePage === 'overview' ? (
