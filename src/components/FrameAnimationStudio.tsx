@@ -79,7 +79,8 @@ export default function FrameAnimationStudio() {
       const url = URL.createObjectURL(file)
       const img = new Image()
       await new Promise<void>(resolve => { img.onload = () => resolve(); img.onerror = () => resolve(); img.src = url })
-      if (!img.naturalWidth) { URL.revokeObjectURL(url); continue }
+      URL.revokeObjectURL(url)
+      if (!img.naturalWidth) continue
       const scale = Math.min(260 / img.naturalWidth, 300 / img.naturalHeight, 1)
       const id = crypto.randomUUID()
       next.push({ id, name: file.name, image: img, x: 70 + (next.length % 3) * 220, y: 150, width: img.naturalWidth * scale, height: img.naturalHeight * scale, dx: 12 + (next.length % 2) * 12, dy: 0, motion: 'dançar' })
