@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ImagePlus, Play, Pause, Download, Trash2, Move, Info } from 'lucide-react'
 
-type Layer = { id: string; name: string; image: HTMLImageElement; x: number; y: number; width: number; height: number; dx: number; dy: number }
+type MotionStyle = 'deslizar' | 'dançar' | 'pular'
+type Layer = { id: string; name: string; image: HTMLImageElement; x: number; y: number; width: number; height: number; dx: number; dy: number; motion: MotionStyle }
 const W = 960
 const H = 540
 
@@ -35,10 +36,17 @@ export default function FrameAnimationStudio() {
     ctx.fillStyle = '#72bd82'; ctx.beginPath(); ctx.ellipse(730, 535, 430, 190, 0, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#f6d477'; ctx.beginPath(); ctx.arc(820, 95, 42, 0, Math.PI * 2); ctx.fill()
     for (const layer of layersRef.current) {
-      const sway = elapsed > 0 ? Math.sin(elapsed * 2 + parseInt(layer.id.slice(-2), 16)) * 7 : 0
-      const x = layer.x + (playingRef.current ? layer.dx * elapsed : 0)
-      const y = layer.y + (playingRef.current ? layer.dy * elapsed : 0) + sway
-      ctx.drawImage(layer.image, x, y, layer.width, layer.height)
+      const phase = elapsed * 2 + parseInt(layer.id.slice(-2), 16)
+      const active = playingRef.current && elapsed > 0
+      const sway = active && layer.motion === 'dançar' ? Math.sin(phase * 1.7) * 10 : 0
+      const hop = active && layer.motion === 'pular' ? Math.abs(Math.sin(phase * 2.2)) * 22 : 0
+      const tilt = active && layer.motion === 'dançar' ? Math.sin(phase) * 0.07 : 0
+      const x = layer.x + (active ? layer.dx * elapsed : 0) + sway
+      const y = layer.y + (active ? layer.dy * elapsed : 0) - hop
+      if (tilt) {
+        ctx.save(); ctx.translate(x + layer.width / 2, y + layer.height / 2); ctx.rotate(tilt)
+        ctx.drawImage(layer.image, -layer.width / 2, -layer.height / 2, layer.width, layer.height); ctx.restore()
+      } else ctx.drawImage(layer.image, x, y, layer.width, layer.height)
       if (selectedId === layer.id && !playingRef.current) {
         ctx.strokeStyle = '#6d4aff'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x, y, layer.width, layer.height); ctx.setLineDash([])
       }
@@ -74,7 +82,7 @@ export default function FrameAnimationStudio() {
       if (!img.naturalWidth) { URL.revokeObjectURL(url); continue }
       const scale = Math.min(260 / img.naturalWidth, 300 / img.naturalHeight, 1)
       const id = crypto.randomUUID()
-      next.push({ id, name: file.name, image: img, x: 70 + (next.length % 3) * 220, y: 150, width: img.naturalWidth * scale, height: img.naturalHeight * scale, dx: 12 + (next.length % 2) * 12, dy: 0 })
+      next.push({ id, name: file.name, image: img, x: 70 + (next.length % 3) * 220, y: 150, width: img.naturalWidth * scale, height: img.naturalHeight * scale, dx: 12 + (next.length % 2) * 12, dy: 0, motion: 'dançar' })
     }
     setLayers(next); setSelectedId(next.at(-1)?.id ?? '')
     setStatus('Imagens carregadas como camadas independentes. Selecione uma camada para ajustar o movimento.')
@@ -134,7 +142,7 @@ export default function FrameAnimationStudio() {
   const selected = layers.find(layer => layer.id === selectedId)
 
   return <section className="workspace-page">
-    <div className="page-title-row"><div><div className="form-kicker">PROTÓTIPO EXPERIMENTAL · SEM CHAMADAS PAGAS DE IA</div><h1>Editor de animação 2D</h1><p>Monte uma cena com camadas separadas, movimente cada elemento e exporte uma prévia em vídeo.</p></div></div>
+    <div className="page-title-row"><div><div className="form-kicker">PROTÓTIPO EXPERIMENTAL · SEM CHAMADAS PAGAS DE IA</div><h1>Editor de animação 2D</h1><p>Monte uma cena com camadas separadas, escolha movimentos simples por camada e exporte uma prévia em vídeo.</p></div></div>
     <div className="hybrid-panel" style={{ marginBottom: 18 }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <label className="primary-button" style={{ cursor: 'pointer' }}><ImagePlus size={17} /> Importar imagens<input type="file" accept="image/png,image/webp,image/jpeg" multiple hidden onChange={e => { void importFiles(e.target.files); e.currentTarget.value = '' }} /></label>
@@ -146,8 +154,8 @@ export default function FrameAnimationStudio() {
       <p style={{ color: '#686579', fontSize: 13, marginBottom: 0 }}>Dica: importe personagens em PNG com fundo transparente, de preferência um arquivo por personagem ou parte do corpo. Arraste cada camada diretamente na cena.</p>
     </div>
     <div className="hybrid-panel">
-      <div className="hybrid-panel-heading"><div className="module-empty-icon"><Move size={20}/></div><div><h2>Camadas e movimento</h2><p>Selecione uma camada para configurar a posição e o deslocamento durante a cena.</p></div></div>
-      {!layers.length ? <div className="empty-state"><ImagePlus size={28}/><h3>Nenhuma camada importada</h3><p>Comece com imagens transparentes separadas para que os elementos possam se mover individualmente.</p></div> : <div style={{ display: 'grid', gap: 10 }}>{layers.map((layer, index) => <div key={layer.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 12, border: '1px solid #ecebf3', borderRadius: 10, background: layer.id === selectedId ? '#f5f1ff' : '#fff' }}><button className="secondary-button" onClick={() => setSelectedId(layer.id)}>{index + 1}. {layer.name}</button><label>X <input type="number" style={{ width: 80 }} value={Math.round(layer.x)} onChange={e => updateLayer(layer.id, { x: Number(e.target.value) })}/></label><label>Y <input type="number" style={{ width: 80 }} value={Math.round(layer.y)} onChange={e => updateLayer(layer.id, { y: Number(e.target.value) })}/></label><label>Movimento X/s <input type="number" style={{ width: 90 }} value={layer.dx} onChange={e => updateLayer(layer.id, { dx: Number(e.target.value) })}/></label><label>Movimento Y/s <input type="number" style={{ width: 90 }} value={layer.dy} onChange={e => updateLayer(layer.id, { dy: Number(e.target.value) })}/></label><button className="danger-button" onClick={() => removeLayer(layer.id)} aria-label="Remover camada"><Trash2 size={16}/></button></div>)}</div>}
+      <div className="hybrid-panel-heading"><div className="module-empty-icon"><Move size={20}/></div><div><h2>Camadas e movimento</h2><p>Escolha um movimento por camada: deslizar, dançar ou pular. São movimentos simples de cena, não articulação automática do corpo.</p></div></div>
+      {!layers.length ? <div className="empty-state"><ImagePlus size={28}/><h3>Nenhuma camada importada</h3><p>Comece com imagens transparentes separadas para que os elementos possam se mover individualmente.</p></div> : <div style={{ display: 'grid', gap: 10 }}>{layers.map((layer, index) => <div key={layer.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 12, border: '1px solid #ecebf3', borderRadius: 10, background: layer.id === selectedId ? '#f5f1ff' : '#fff' }}><button className="secondary-button" onClick={() => setSelectedId(layer.id)}>{index + 1}. {layer.name}</button><label>X <input type="number" style={{ width: 80 }} value={Math.round(layer.x)} onChange={e => updateLayer(layer.id, { x: Number(e.target.value) })}/></label><label>Y <input type="number" style={{ width: 80 }} value={Math.round(layer.y)} onChange={e => updateLayer(layer.id, { y: Number(e.target.value) })}/></label><label>Movimento X/s <input type="number" style={{ width: 90 }} value={layer.dx} onChange={e => updateLayer(layer.id, { dx: Number(e.target.value) })}/></label><label>Movimento Y/s <input type="number" style={{ width: 90 }} value={layer.dy} onChange={e => updateLayer(layer.id, { dy: Number(e.target.value) })}/></label><label>Animação <select value={layer.motion} onChange={e => updateLayer(layer.id, { motion: e.target.value as MotionStyle })}><option value="deslizar">Deslizar</option><option value="dançar">Dançar</option><option value="pular">Pular</option></select></label><button className="danger-button" onClick={() => removeLayer(layer.id)} aria-label="Remover camada"><Trash2 size={16}/></button></div>)}</div>}
       {selected && <p style={{ color: '#5b40cc', fontSize: 13 }}>Selecionado: {selected.name}</p>}
       <div className="notice" style={{ marginTop: 14 }}><Info size={16}/> {status}</div>
     </div>
