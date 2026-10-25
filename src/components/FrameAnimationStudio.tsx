@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { ImagePlus, Play, Pause, Download, Trash2, Move, Info, ArrowUp, ArrowDown, Eye, EyeOff, Copy } from 'lucide-react'
+import { ImagePlus, Play, Pause, Download, Trash2, Move, Info, ArrowUp, ArrowDown, Eye, EyeOff, Copy, Cloud, RefreshCw } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+
+type ProjectOption = { id: string; title: string }
+type SavedScene = { id: string; title: string; metadata: Record<string, any>; created_at: string }
 
 type MotionStyle = 'parado' | 'deslizar' | 'dançar' | 'pular'
 type BackgroundStyle = 'campo' | 'quarto' | 'palco'
@@ -7,7 +11,7 @@ type Layer = { id: string; name: string; image: HTMLImageElement; x: number; y: 
 const W = 960
 const H = 540
 
-export default function FrameAnimationStudio() {
+export default function FrameAnimationStudio({ userId, projects }: { userId: string; projects: ProjectOption[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const layersRef = useRef<Layer[]>([])
   const rafRef = useRef<number | null>(null)
@@ -22,9 +26,100 @@ export default function FrameAnimationStudio() {
   const [status, setStatus] = useState('Importe imagens PNG transparentes separadas para começar.')
   const [selectedId, setSelectedId] = useState('')
   const [recording, setRecording] = useState(false)
+  const [projectId, setProjectId] = useState(projects[0]?.id ?? '')
+  const [savedScenes, setSavedScenes] = useState<SavedScene[]>([])
+  const [selectedSavedScene, setSelectedSavedScene] = useState('')
+  const [cloudBusy, setCloudBusy] = useState(false)
 
   useEffect(() => { layersRef.current = layers; draw(0) }, [layers, background])
   useEffect(() => () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); recorderRef.current?.stop() }, [])
+
+
+  async function refreshCloudScenes() {
+    if (!supabase || !projectId) { setSavedScenes([]); return }
+    const { data, error } = await supabase.from('media_assets').select('id,title,metadata,created_at')
+      .eq('project_id', projectId).eq('user_id', userId).eq('asset_type', 'animation_scene')
+      .order('created_at', { ascending: false })
+    if (error) { setStatus('Não consegui listar as cenas na nuvem: ' + error.message); return }
+    setSavedScenes((data ?? []) as SavedScene[])
+  }
+
+  useEffect(() => { void refreshCloudScenes() }, [projectId, userId])
+
+  async function saveCloudScene() {
+    if (!supabase) { setStatus('Supabase não configurado.'); return }
+    if (!projectId) { setStatus('Crie ou selecione um projeto antes de salvar na nuvem.'); return }
+    if (!layersRef.current.length) { setStatus('Importe pelo menos uma camada antes de salvar.'); return }
+    setCloudBusy(true)
+    const sceneId = crypto.randomUUID()
+    const uploadedPaths: string[] = []
+    try {
+      const manifestLayers = []
+      for (let i = 0; i < layersRef.current.length; i++) {
+        const layer = layersRef.current[i]
+        const imageCanvas = document.createElement('canvas')
+        imageCanvas.width = layer.image.naturalWidth
+        imageCanvas.height = layer.image.naturalHeight
+        const ctx = imageCanvas.getContext('2d')
+        if (!ctx) throw new Error('Não foi possível preparar uma imagem.')
+        ctx.drawImage(layer.image, 0, 0)
+        const blob = await new Promise<Blob>((resolve, reject) => imageCanvas.toBlob(b => b ? resolve(b) : reject(new Error('Falha ao converter imagem.')), 'image/png'))
+        const path = userId + '/' + projectId + '/animation-scenes/' + sceneId + '/layer-' + i + '.png'
+        const { error: uploadError } = await supabase.storage.from('creative-media').upload(path, blob, { contentType: 'image/png', upsert: false })
+        if (uploadError) throw uploadError
+        uploadedPaths.push(path)
+        manifestLayers.push({ name: layer.name, storage_path: path, x: layer.x, y: layer.y, width: layer.width, height: layer.height, dx: layer.dx, dy: layer.dy, motion: layer.motion, visible: layer.visible })
+      }
+      const title = 'Cena ' + new Date().toLocaleString('pt-BR')
+      const { error: insertError } = await supabase.from('media_assets').insert({
+        user_id: userId, project_id: projectId, asset_type: 'animation_scene', title, mime_type: 'application/json',
+        metadata: { format: 'desenhos-animados-scene', version: 1, duration, background, layers: manifestLayers }
+      })
+      if (insertError) throw insertError
+      setStatus('Cena salva na nuvem com ' + manifestLayers.length + ' camada(s).')
+      await refreshCloudScenes()
+    } catch (error) {
+      if (uploadedPaths.length) await supabase.storage.from('creative-media').remove(uploadedPaths)
+      setStatus('Falha ao salvar na nuvem: ' + (error instanceof Error ? error.message : 'erro desconhecido'))
+    } finally { setCloudBusy(false) }
+  }
+
+  async function openCloudScene() {
+    if (!supabase || !selectedSavedScene) return
+    const saved = savedScenes.find(item => item.id === selectedSavedScene)
+    if (!saved) return
+    setCloudBusy(true)
+    try {
+      const meta = saved.metadata
+      if (meta?.format !== 'desenhos-animados-scene' || !Array.isArray(meta.layers) || meta.layers.length > 100) throw new Error('Formato de cena inválido.')
+      const restored: Layer[] = []
+      for (const item of meta.layers) {
+        if (typeof item.storage_path !== 'string' || !item.storage_path.startsWith(userId + '/')) continue
+        const { data, error } = await supabase.storage.from('creative-media').download(item.storage_path)
+        if (error || !data) throw error ?? new Error('Não foi possível baixar uma camada.')
+        const image = new Image()
+        const objectUrl = URL.createObjectURL(data)
+        await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('Imagem inválida')); image.src = objectUrl })
+        URL.revokeObjectURL(objectUrl)
+        const width = Number.isFinite(item.width) ? Math.max(20, Math.min(W, item.width)) : Math.min(260, image.naturalWidth)
+        const height = Number.isFinite(item.height) ? Math.max(20, Math.min(H, item.height)) : Math.min(300, image.naturalHeight)
+        restored.push({ id: crypto.randomUUID(), name: typeof item.name === 'string' ? item.name.slice(0, 60) : 'Camada', image,
+          x: Number.isFinite(item.x) ? Math.max(0, Math.min(W - width, item.x)) : 0,
+          y: Number.isFinite(item.y) ? Math.max(0, Math.min(H - height, item.y)) : 0, width, height,
+          dx: Number.isFinite(item.dx) ? Math.max(-500, Math.min(500, item.dx)) : 0,
+          dy: Number.isFinite(item.dy) ? Math.max(-500, Math.min(500, item.dy)) : 0,
+          motion: ['parado', 'deslizar', 'dançar', 'pular'].includes(item.motion) ? item.motion : 'deslizar', visible: item.visible !== false })
+      }
+      stopPlayback()
+      setLayers(restored)
+      setSelectedId(restored[0]?.id ?? '')
+      setDuration([4, 6, 8, 12].includes(meta.duration) ? meta.duration : 6)
+      setBackground(['campo', 'quarto', 'palco'].includes(meta.background) ? meta.background : 'campo')
+      setStatus('Cena recuperada da nuvem com ' + restored.length + ' camada(s).')
+    } catch (error) {
+      setStatus('Não consegui abrir a cena da nuvem: ' + (error instanceof Error ? error.message : 'erro desconhecido'))
+    } finally { setCloudBusy(false) }
+  }
 
   function draw(elapsed: number) {
     const canvas = canvasRef.current
@@ -256,7 +351,7 @@ export default function FrameAnimationStudio() {
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <label className="primary-button" style={{ cursor: 'pointer' }}><ImagePlus size={17} /> Importar imagens<input type="file" accept="image/png,image/webp,image/jpeg" multiple hidden onChange={e => { void importFiles(e.target.files); e.currentTarget.value = '' }} /></label>
         <button className="secondary-button" onClick={playing ? stopPlayback : startPlayback}>{playing ? <Pause size={16}/> : <Play size={16}/>} {playing ? 'Parar prévia' : 'Reproduzir prévia'}</button>
-        <button className="secondary-button" onClick={() => void saveScene()}><Download size={16}/> Salvar cena (JSON)</button><label className="secondary-button" style={{ cursor: 'pointer' }}>Abrir cena<input type="file" accept="application/json,.json" hidden onChange={e => { void loadScene(e.target.files?.[0]); e.currentTarget.value = '' }} /></label><button className="primary-button" onClick={exportVideo} disabled={recording}><Download size={16}/> {recording ? 'Exportando…' : 'Exportar vídeo WEBM'}</button>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Projeto <select value={projectId} onChange={e => setProjectId(e.target.value)}><option value="">Selecione…</option>{projects.map(project => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label><button className="primary-button" onClick={() => void saveCloudScene()} disabled={cloudBusy || !projectId}><Cloud size={16}/> {cloudBusy ? 'Salvando…' : 'Salvar na nuvem'}</button><button className="secondary-button" onClick={() => void saveScene()}><Download size={16}/> Exportar JSON</button><button className="secondary-button" onClick={() => void refreshCloudScenes()} disabled={cloudBusy}><RefreshCw size={16}/> Atualizar cenas</button><select value={selectedSavedScene} onChange={e => setSelectedSavedScene(e.target.value)}><option value="">Escolha uma cena salva…</option>{savedScenes.map(scene => <option key={scene.id} value={scene.id}>{scene.title}</option>)}</select><button className="secondary-button" onClick={() => void openCloudScene()} disabled={cloudBusy || !selectedSavedScene}>Abrir da nuvem</button><label className="secondary-button" style={{ cursor: 'pointer' }}>Abrir cena<input type="file" accept="application/json,.json" hidden onChange={e => { void loadScene(e.target.files?.[0]); e.currentTarget.value = '' }} /></label><button className="primary-button" onClick={exportVideo} disabled={recording}><Download size={16}/> {recording ? 'Exportando…' : 'Exportar vídeo WEBM'}</button>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Duração <select value={duration} onChange={e => setDuration(Number(e.target.value))}><option value={4}>4 s</option><option value={6}>6 s</option><option value={8}>8 s</option><option value={12}>12 s</option></select></label><label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Cenário <select value={background} onChange={e => setBackground(e.target.value as BackgroundStyle)}><option value="campo">Campo</option><option value="quarto">Quarto</option><option value="palco">Palco musical</option></select></label>
       </div>
       <canvas ref={canvasRef} width={W} height={H} onPointerDown={pointerDown} style={{ width: '100%', display: 'block', borderRadius: 12, border: '1px solid #ddd9ee', cursor: playing ? 'default' : 'grab', touchAction: 'none' }} />
