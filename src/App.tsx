@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import WorkspaceModule from './components/WorkspaceModule'
+import AnimationStudio from './components/AnimationStudio'
 
 type CreativeProject = {
   id: string
@@ -33,12 +34,13 @@ const navItems = [
   { id: 'characters', label: 'Personagens', icon: Users },
   { id: 'episodes', label: 'Episódios e roteiros', icon: BookOpen },
   { id: 'scenes', label: 'Cenas e storyboard', icon: Clapperboard },
+  { id: 'animation', label: 'Motor de animação', icon: Film },
   { id: 'music', label: 'Músicas e áudio', icon: AudioLines },
   { id: 'library', label: 'Biblioteca de mídia', icon: FileImage },
 ]
 const pageTitles: Record<string, string> = {
   overview: 'Visão geral', projects: 'Meus projetos', characters: 'Personagens',
-  episodes: 'Episódios e roteiros', scenes: 'Cenas e storyboard', music: 'Músicas e áudio', library: 'Biblioteca de mídia',
+  episodes: 'Episódios e roteiros', scenes: 'Cenas e storyboard', animation: 'Motor de animação', music: 'Músicas e áudio', library: 'Biblioteca de mídia',
 }
 
 export default function App() {
@@ -343,6 +345,8 @@ export default function App() {
               {projectError && <div className="notice error-notice">{projectError}</div>}
               {projectsLoading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando seus projetos...</div> : filteredProjects.length ? <div className="project-grid all-projects">{filteredProjects.map((project, i) => <ProjectCard key={project.id} project={project} index={i} onClick={() => setEditingProject(project)} />)}<button className="new-project-card" onClick={() => setShowNewProject(true)}><span className="new-project-icon"><Plus size={22} /></span><strong>Nova criação</strong><span>Uma ideia esperando para nascer</span></button></div> : <EmptyProjects onCreate={() => setShowNewProject(true)} filtered={search.length > 0} />}
             </>
+          ) : activePage === 'animation' ? (
+            <AnimationStudio />
           ) : activePage === 'settings' ? (
             <section className="placeholder-page"><div className="placeholder-icon"><Settings2 size={25} /></div><div className="form-kicker">PREFERÊNCIAS</div><h1>Configurações</h1><p>Gerencie seu perfil e a segurança da conta.</p><form className="settings-panel profile-settings" onSubmit={saveProfile}><div><strong>Seu perfil</strong><span>{session.user.email}</span><label>Nome de exibição<input value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="Como devemos te chamar?" maxLength={80} /></label>{profileMessage && <span className="settings-feedback">{profileMessage}</span>}</div><button className="primary-button" type="submit" disabled={savingProfile}>{savingProfile ? <LoaderCircle size={16} className="spin" /> : <Check size={16} />} Salvar perfil</button></form><div className="settings-panel"><div><strong>Conta e segurança</strong><span>Para redefinir sua senha, use “Esqueci minha senha” na tela de entrada.</span></div><button className="secondary-button" onClick={signOut}><LogOut size={16} /> Sair da conta</button></div><div className="settings-panel"><div><strong>Seus dados</strong><span>Projetos e arquivos são salvos na nuvem e separados por conta.</span></div><span className="secure-pill"><Check size={14} /> Proteção ativa</span></div><div className="settings-panel ai-settings-panel"><div><strong>Recursos de IA</strong><span>Assistente de roteiros usa GEMINI_API_KEY; imagens e voz usam OPENAI_API_KEY; música usa ELEVENLABS_API_KEY; vídeo usa MAGE_API_KEY (Mage API). Cadastre as chaves como Secrets das Edge Functions — nunca no frontend. A geração de imagem, música e vídeo pode exigir créditos pagos.</span></div><a className="secondary-button" href="https://supabase.com/dashboard/project/mkbvoltdkhmxsuztbjcd/functions/secrets" target="_blank" rel="noreferrer">Configurar chaves <ArrowRight size={15} /></a></div></section>
           ) : (
