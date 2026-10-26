@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desenhos Animados IA</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#101323;color:white}header{padding:22px 7%;background:#191d35;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.logo{font-size:23px;font-weight:bold}.logo span{color:#ffcf58}.hero{text-align:center;padding:55px 20px;background:linear-gradient(135deg,#29205a,#124b65)}.hero h1{font-size:clamp(32px,6vw,54px);margin:10px 0}.hero p{color:#e0e6ff;line-height:1.7}.button{display:inline-block;background:#ffcf58;color:#17172b;border:0;padding:13px 20px;border-radius:12px;font-weight:bold;cursor:pointer;text-decoration:none;margin:6px}main{max-width:1100px;margin:auto;padding:35px 20px}h2{color:#ffcf58}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}.card{background:#1d223b;border:1px solid #343b5c;padding:22px;border-radius:18px}.emoji{font-size:38px}label{display:block;margin:15px 0 7px}input,textarea,select{width:100%;padding:12px;border-radius:9px;border:1px solid #454c70;background:#101323;color:white;font:inherit}textarea{min-height:100px;resize:vertical}.project{margin-top:25px}.saved-item{background:#292f4d;border-radius:10px;padding:13px;margin:10px 0;overflow-wrap:anywhere}.muted{color:#b9c2df;line-height:1.6}footer{text-align:center;padding:30px;color:#b9c2df}.studio-shell{background:#fff;color:#202033;padding:12px;border-radius:18px}.studio-shell p{color:#555}#animation-studio{min-height:200px}
+</style>
+</head>
+<body>
+<header><div class="logo">🎨 Desenhos <span>Animados IA</span></div><span>Seu estúdio criativo infantil</span></header>
+<section class="hero"><div style="font-size:48px">🦊 🐻 🐰 🦁</div><h1>Vamos criar uma grande aventura!</h1><p>Crie personagens, invente histórias e anime cenas para seus vídeos infantis.</p><a class="button" href="#criar">Começar a criar</a><a class="button" href="#motor">Animar personagem</a></section>
+<main>
+<h2>✨ Seu estúdio de criação</h2>
+<div class="grid">
+<div class="card"><div class="emoji">📖</div><h3>Histórias e roteiros</h3><p class="muted">Invente aventuras, diálogos e histórias educativas.</p></div>
+<div class="card"><div class="emoji">🧸</div><h3>Personagens</h3><p class="muted">Defina nomes, personalidades e características. No motor abaixo, personalize um personagem cartoon.</p></div>
+<div class="card"><div class="emoji">🎵</div><h3>Músicas e vozes</h3><p class="muted">Prepare letras, narrações e falas. A geração automática de áudio ainda não está ligada nesta versão.</p></div>
+<div class="card"><div class="emoji">🎬</div><h3>Criação de episódios</h3><p class="muted">Organize cenas e planeje vídeos horizontais ou verticais. O motor exporta clipes curtos em vídeo WebM.</p></div>
+</div>
+<section id="criar" class="project"><h2>📝 Criar um novo projeto</h2><div class="card">
+<form id="projectForm">
+<label for="name">Nome do projeto</label><input id="name" required placeholder="Ex.: A aventura das meninas">
+<label for="kind">Tipo de projeto</label><select id="kind"><option>Desenho animado</option><option>História educativa</option><option>Música infantil</option><option>Clipe musical</option></select>
+<label for="characters">Personagens</label><input id="characters" placeholder="Ex.: Ana, Bia e um coelhinho">
+<label for="theme">Tema da história</label><input id="theme" placeholder="Ex.: amizade, cores e números">
+<label for="script">História, cenas e diálogos</label><textarea id="script" placeholder="Escreva aqui sua história..."></textarea>
+<label for="format">Formato planejado</label><select id="format"><option>YouTube horizontal (16:9)</option><option>Shorts / Reels vertical (9:16)</option></select>
+<button class="button" type="submit">💾 Salvar projeto</button>
+</form></div></section>
+<section class="project"><h2>📚 Meus projetos salvos</h2><p class="muted">Os projetos ficam salvos neste navegador. Para sincronizar entre dispositivos, ainda é necessário conectar a autenticação e o banco de dados Supabase.</p><div id="projects"></div></section>
+<section id="motor" class="project"><h2>🎞️ Motor de animação — criar e movimentar personagem</h2><p class="muted">Personalize o personagem, escolha dançar, andar, pular ou acenar, visualize e gere um clipe curto. Este motor 2D funciona localmente no navegador e não usa chave de API.</p><div class="studio-shell"><div id="animation-studio"><p>Carregando o motor de animação…</p></div></div><p class="muted">Limitação transparente: este motor cria animação 2D procedural com personagens desenhados por código; ainda não transforma uma imagem enviada em animação realista por IA. O arquivo gerado é WebM.</p></section>
+<section class="project"><h2>🔌 Integrações e estado</h2><div class="card"><p class="muted">Esta página já inclui o motor de animação 2D. A gravação de voz, geração musical, animação generativa por IA e sincronização online Supabase ainda não estão conectadas nesta página. Não insira chaves secretas neste site.</p></div></section>
+</main>
+<footer>Desenhos Animados IA · Um mundo de criatividade para crianças 🌈</footer>
+<script>
+const storageKey="desenhos-animados-ia-projetos";
+function getProjects(){try{return JSON.parse(localStorage.getItem(storageKey)||"[]")}catch{return[]}}
+function renderProjects(){const container=document.getElementById("projects");container.replaceChildren();const projects=getProjects();if(!projects.length){container.textContent="Seus projetos aparecerão aqui.";return}projects.forEach((project,index)=>{const card=document.createElement("div");card.className="saved-item";const title=document.createElement("strong");title.textContent=project.name;const details=document.createElement("p");details.textContent=project.kind+" · "+project.format+"\nPersonagens: "+(project.characters||"Não definidos")+"\nTema: "+(project.theme||"Não definido")+"\n\n"+(project.script||"História ainda não escrita");details.style.whiteSpace="pre-wrap";const remove=document.createElement("button");remove.className="button";remove.type="button";remove.textContent="Excluir projeto";remove.addEventListener("click",()=>{const updated=getProjects();updated.splice(index,1);localStorage.setItem(storageKey,JSON.stringify(updated));renderProjects()});card.append(title,details,remove);container.append(card)})}
+document.getElementById("projectForm").addEventListener("submit",event=>{event.preventDefault();const project={name:document.getElementById("name").value.trim(),kind:document.getElementById("kind").value,characters:document.getElementById("characters").value.trim(),theme:document.getElementById("theme").value.trim(),script:document.getElementById("script").value.trim(),format:document.getElementById("format").value};try{const projects=getProjects();projects.push(project);localStorage.setItem(storageKey,JSON.stringify(projects));document.getElementById("projectForm").reset();renderProjects();alert("Projeto salvo neste navegador!")}catch{alert("Não foi possível salvar. Verifique o espaço disponível no navegador.")}});
+renderProjects();
+</script>
+<script src="https://cdn.jsdelivr.net/gh/meloameida-coder/Desenhos-Animados@main/public/animation-studio.js"></script>
+<script>
+(function(){const mount=window.mountCartoonAnimationStudio;const root=document.getElementById("animation-studio");if(typeof mount==="function"){mount(root)}else{root.innerHTML="<p>Não foi possível carregar o motor. Atualize a página ou tente novamente mais tarde.</p>"}})();
+</script>
+</body>
+</html>
