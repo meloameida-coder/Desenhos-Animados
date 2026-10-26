@@ -7,7 +7,8 @@ type SavedScene = { id: string; title: string; metadata: Record<string, any>; cr
 
 type MotionStyle = 'parado' | 'deslizar' | 'dançar' | 'pular'
 type BackgroundStyle = 'campo' | 'quarto' | 'palco'
-type Layer = { id: string; name: string; image: HTMLImageElement; x: number; y: number; width: number; height: number; dx: number; dy: number; motion: MotionStyle; visible: boolean }
+type BodyPart = 'outro' | 'cabeça' | 'tronco' | 'braço esquerdo' | 'braço direito' | 'perna esquerda' | 'perna direita'
+type Layer = { id: string; name: string; image: HTMLImageElement; x: number; y: number; width: number; height: number; dx: number; dy: number; motion: MotionStyle; visible: boolean; part?: BodyPart; pivotX?: number; pivotY?: number }
 const W = 960
 const H = 540
 
@@ -74,7 +75,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
         const { error: uploadError } = await supabase.storage.from('creative-media').upload(path, blob, { contentType: 'image/png', upsert: false })
         if (uploadError) throw uploadError
         uploadedPaths.push(path)
-        manifestLayers.push({ name: layer.name, storage_path: path, x: layer.x, y: layer.y, width: layer.width, height: layer.height, dx: layer.dx, dy: layer.dy, motion: layer.motion, visible: layer.visible })
+        manifestLayers.push({ name: layer.name, storage_path: path, x: layer.x, y: layer.y, width: layer.width, height: layer.height, dx: layer.dx, dy: layer.dy, motion: layer.motion, visible: layer.visible, part: layer.part ?? 'outro', pivotX: layer.pivotX, pivotY: layer.pivotY })
       }
       const title = 'Cena ' + new Date().toLocaleString('pt-BR')
       const { error: insertError } = await supabase.from('media_assets').insert({
@@ -115,7 +116,10 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
           y: Number.isFinite(item.y) ? Math.max(0, Math.min(H - height, item.y)) : 0, width, height,
           dx: Number.isFinite(item.dx) ? Math.max(-500, Math.min(500, item.dx)) : 0,
           dy: Number.isFinite(item.dy) ? Math.max(-500, Math.min(500, item.dy)) : 0,
-          motion: ['parado', 'deslizar', 'dançar', 'pular'].includes(item.motion) ? item.motion : 'deslizar', visible: item.visible !== false })
+          motion: ['parado', 'deslizar', 'dançar', 'pular'].includes(item.motion) ? item.motion : 'deslizar', visible: item.visible !== false,
+          part: ['outro', 'cabeça', 'tronco', 'braço esquerdo', 'braço direito', 'perna esquerda', 'perna direita'].includes(item.part) ? item.part : 'outro',
+          pivotX: Number.isFinite(item.pivotX) ? Math.max(0, Math.min(width, item.pivotX)) : width / 2,
+          pivotY: Number.isFinite(item.pivotY) ? Math.max(0, Math.min(height, item.pivotY)) : height / 2 })
       }
       if (restored.length !== meta.layers.length) throw new Error('A cena não pôde ser restaurada por completo.')
       stopPlayback()
@@ -163,12 +167,20 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
       const active = playingRef.current && elapsed > 0 && layer.motion !== 'parado'
       const sway = active && layer.motion === 'dançar' ? Math.sin(phase * 1.7) * 10 : 0
       const hop = active && layer.motion === 'pular' ? Math.abs(Math.sin(phase * 2.2)) * 22 : 0
-      const tilt = active && layer.motion === 'dançar' ? Math.sin(phase) * 0.07 : 0
+      const partSwing = active && layer.motion === 'dançar' && (layer.part === 'braço esquerdo' || layer.part === 'braço direito' || layer.part === 'perna esquerda' || layer.part === 'perna direita')
+        ? Math.sin(phase * 1.7 + (layer.part === 'braço esquerdo' || layer.part === 'perna direita' ? 0 : Math.PI)) * 0.28 : 0
+      const tilt = active && layer.motion === 'dançar' ? Math.sin(phase) * 0.035 : 0
       const x = layer.x + (active ? layer.dx * elapsed : 0) + sway
       const y = layer.y + (active ? layer.dy * elapsed : 0) - hop
-      if (tilt) {
-        ctx.save(); ctx.translate(x + layer.width / 2, y + layer.height / 2); ctx.rotate(tilt)
-        ctx.drawImage(layer.image, -layer.width / 2, -layer.height / 2, layer.width, layer.height); ctx.restore()
+      const pivotX = Math.max(0, Math.min(layer.width, layer.pivotX ?? layer.width / 2))
+      const pivotY = Math.max(0, Math.min(layer.height, layer.pivotY ?? layer.height / 2))
+      const rotation = tilt + partSwing
+      if (rotation) {
+        ctx.save()
+        ctx.translate(x + pivotX, y + pivotY)
+        ctx.rotate(rotation)
+        ctx.drawImage(layer.image, -pivotX, -pivotY, layer.width, layer.height)
+        ctx.restore()
       } else ctx.drawImage(layer.image, x, y, layer.width, layer.height)
       if (selectedId === layer.id && !playingRef.current) {
         ctx.strokeStyle = '#6d4aff'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x, y, layer.width, layer.height); ctx.setLineDash([])
@@ -206,7 +218,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
       if (!img.naturalWidth) continue
       const scale = Math.min(260 / img.naturalWidth, 300 / img.naturalHeight, 1)
       const id = crypto.randomUUID()
-      next.push({ id, name: file.name, image: img, x: 70 + (next.length % 3) * 220, y: 150, width: img.naturalWidth * scale, height: img.naturalHeight * scale, dx: 12 + (next.length % 2) * 12, dy: 0, motion: 'dançar', visible: true })
+      next.push({ id, name: file.name, image: img, x: 70 + (next.length % 3) * 220, y: 150, width: img.naturalWidth * scale, height: img.naturalHeight * scale, dx: 12 + (next.length % 2) * 12, dy: 0, motion: 'dançar', visible: true, part: 'outro', pivotX: img.naturalWidth * scale / 2, pivotY: img.naturalHeight * scale / 2 })
     }
     setLayers(next); setSelectedId(next.at(-1)?.id ?? '')
     setStatus('Imagens carregadas como camadas independentes. Selecione uma camada para ajustar o movimento.')
@@ -290,7 +302,7 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
         const imageContext = imageCanvas.getContext('2d')
         if (!imageContext) throw new Error('Não foi possível preparar uma imagem.')
         imageContext.drawImage(layer.image, 0, 0)
-        return { id: layer.id, name: layer.name, imageData: imageCanvas.toDataURL('image/png'), x: layer.x, y: layer.y, width: layer.width, height: layer.height, dx: layer.dx, dy: layer.dy, motion: layer.motion, visible: layer.visible }
+        return { id: layer.id, name: layer.name, imageData: imageCanvas.toDataURL('image/png'), x: layer.x, y: layer.y, width: layer.width, height: layer.height, dx: layer.dx, dy: layer.dy, motion: layer.motion, visible: layer.visible, part: layer.part ?? 'outro', pivotX: layer.pivotX, pivotY: layer.pivotY }
       })
       const data = { format: 'desenhos-animados-scene', version: 1, duration, background, layers: savedLayers }
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -334,7 +346,10 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
           dx: Number.isFinite(item.dx) ? Math.max(-500, Math.min(500, item.dx)) : 0,
           dy: Number.isFinite(item.dy) ? Math.max(-500, Math.min(500, item.dy)) : 0,
           motion,
-          visible: item.visible !== false
+          visible: item.visible !== false,
+          part: ['outro', 'cabeça', 'tronco', 'braço esquerdo', 'braço direito', 'perna esquerda', 'perna direita'].includes(item.part) ? item.part : 'outro',
+          pivotX: Number.isFinite(item.pivotX) ? Math.max(0, Math.min(Number(item.width) || 260, item.pivotX)) : (Number(item.width) || 260) / 2,
+          pivotY: Number.isFinite(item.pivotY) ? Math.max(0, Math.min(Number(item.height) || 300, item.pivotY)) : (Number(item.height) || 300) / 2
         })
         const restoredLayer = restored[restored.length - 1]
         restoredLayer.x = Number.isFinite(item.x) ? Math.max(0, Math.min(W - restoredLayer.width, item.x)) : 0
@@ -366,8 +381,8 @@ export default function FrameAnimationStudio({ userId, projects }: { userId: str
       <p style={{ color: '#686579', fontSize: 13, marginBottom: 0 }}>Dica: importe personagens em PNG com fundo transparente, de preferência um arquivo por personagem ou parte do corpo. Arraste cada camada diretamente na cena.</p>
     </div>
     <div className="hybrid-panel">
-      <div className="hybrid-panel-heading"><div className="module-empty-icon"><Move size={20}/></div><div><h2>Camadas e movimento</h2><p>Escolha um movimento por camada: deslizar, dançar ou pular. São movimentos simples de cena, não articulação automática do corpo.</p></div></div>
-      {!layers.length ? <div className="empty-state"><ImagePlus size={28}/><h3>Nenhuma camada importada</h3><p>Comece com imagens transparentes separadas para que os elementos possam se mover individualmente.</p></div> : <div style={{ display: 'grid', gap: 10 }}>{layers.map((layer, index) => <div key={layer.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 12, border: '1px solid #ecebf3', borderRadius: 10, background: layer.id === selectedId ? '#f5f1ff' : '#fff' }}><button className="secondary-button" onClick={() => setSelectedId(layer.id)}>{index + 1}. {layer.name}</button><label>Nome <input type="text" maxLength={60} style={{ width: 150 }} value={layer.name} onChange={e => updateLayer(layer.id, { name: e.target.value })}/></label><button className="secondary-button" onClick={() => updateLayer(layer.id, { visible: !layer.visible })} aria-label={layer.visible ? "Ocultar camada" : "Mostrar camada"} title={layer.visible ? "Ocultar camada" : "Mostrar camada"}>{layer.visible ? <Eye size={16}/> : <EyeOff size={16}/>} {layer.visible ? "Visível" : "Oculta"}</button><label>X <input type="number" style={{ width: 80 }} value={Math.round(layer.x)} onChange={e => updateLayer(layer.id, { x: Number(e.target.value) })}/></label><label>Y <input type="number" style={{ width: 80 }} value={Math.round(layer.y)} onChange={e => updateLayer(layer.id, { y: Number(e.target.value) })}/></label><label>Largura <input type="number" min="20" max={W} style={{ width: 85 }} value={Math.round(layer.width)} onChange={e => { const width = Math.max(20, Math.min(W, Number(e.target.value) || 20)); updateLayer(layer.id, { width, height: width * layer.image.naturalHeight / layer.image.naturalWidth }) }}/></label><label>Movimento X/s <input type="number" style={{ width: 90 }} value={layer.dx} onChange={e => updateLayer(layer.id, { dx: Number(e.target.value) })}/></label><label>Movimento Y/s <input type="number" style={{ width: 90 }} value={layer.dy} onChange={e => updateLayer(layer.id, { dy: Number(e.target.value) })}/></label><label>Animação <select value={layer.motion} onChange={e => updateLayer(layer.id, { motion: e.target.value as MotionStyle })}><option value="parado">Parado</option><option value="deslizar">Deslizar</option><option value="dançar">Dançar</option><option value="pular">Pular</option></select></label><button className="secondary-button" onClick={() => moveLayer(layer.id, 1)} disabled={index === layers.length - 1} aria-label="Trazer camada para frente" title="Trazer para frente"><ArrowUp size={16}/></button><button className="secondary-button" onClick={() => moveLayer(layer.id, -1)} disabled={index === 0} aria-label="Enviar camada para trás" title="Enviar para trás"><ArrowDown size={16}/></button><button className="secondary-button" onClick={() => duplicateLayer(layer)} aria-label="Duplicar camada" title="Duplicar camada"><Copy size={16}/></button><button className="danger-button" onClick={() => removeLayer(layer.id)} aria-label="Remover camada"><Trash2 size={16}/></button></div>)}</div>}
+      <div className="hybrid-panel-heading"><div className="module-empty-icon"><Move size={20}/></div><div><h2>Camadas e movimento</h2><p>Escolha um movimento por camada: deslizar, dançar ou pular. São movimentos simples de cena, articulação automática completa. Para braços e pernas, importe cada parte em imagem transparente, alinhe as camadas e ajuste o pivô de rotação.</p></div></div>
+      {!layers.length ? <div className="empty-state"><ImagePlus size={28}/><h3>Nenhuma camada importada</h3><p>Comece com imagens transparentes separadas para que os elementos possam se mover individualmente.</p></div> : <div style={{ display: 'grid', gap: 10 }}>{layers.map((layer, index) => <div key={layer.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 12, border: '1px solid #ecebf3', borderRadius: 10, background: layer.id === selectedId ? '#f5f1ff' : '#fff' }}><button className="secondary-button" onClick={() => setSelectedId(layer.id)}>{index + 1}. {layer.name}</button><label>Nome <input type="text" maxLength={60} style={{ width: 150 }} value={layer.name} onChange={e => updateLayer(layer.id, { name: e.target.value })}/></label><button className="secondary-button" onClick={() => updateLayer(layer.id, { visible: !layer.visible })} aria-label={layer.visible ? "Ocultar camada" : "Mostrar camada"} title={layer.visible ? "Ocultar camada" : "Mostrar camada"}>{layer.visible ? <Eye size={16}/> : <EyeOff size={16}/>} {layer.visible ? "Visível" : "Oculta"}</button><label>X <input type="number" style={{ width: 80 }} value={Math.round(layer.x)} onChange={e => updateLayer(layer.id, { x: Number(e.target.value) })}/></label><label>Y <input type="number" style={{ width: 80 }} value={Math.round(layer.y)} onChange={e => updateLayer(layer.id, { y: Number(e.target.value) })}/></label><label>Largura <input type="number" min="20" max={W} style={{ width: 85 }} value={Math.round(layer.width)} onChange={e => { const width = Math.max(20, Math.min(W, Number(e.target.value) || 20)); updateLayer(layer.id, { width, height: width * layer.image.naturalHeight / layer.image.naturalWidth }) }}/></label><label>Movimento X/s <input type="number" style={{ width: 90 }} value={layer.dx} onChange={e => updateLayer(layer.id, { dx: Number(e.target.value) })}/></label><label>Movimento Y/s <input type="number" style={{ width: 90 }} value={layer.dy} onChange={e => updateLayer(layer.id, { dy: Number(e.target.value) })}/></label><label>Animação <select value={layer.motion} onChange={e => updateLayer(layer.id, { motion: e.target.value as MotionStyle })}><option value="parado">Parado</option><option value="deslizar">Deslizar</option><option value="dançar">Dançar</option><option value="pular">Pular</option></select></label><label>Parte do corpo <select value={layer.part ?? 'outro'} onChange={e => updateLayer(layer.id, { part: e.target.value as BodyPart })}><option value="outro">Outro</option><option value="cabeça">Cabeça</option><option value="tronco">Tronco</option><option value="braço esquerdo">Braço esquerdo</option><option value="braço direito">Braço direito</option><option value="perna esquerda">Perna esquerda</option><option value="perna direita">Perna direita</option></select></label><label>Pivô X <input type="number" min="0" max={Math.round(layer.width)} style={{ width: 78 }} value={Math.round(layer.pivotX ?? layer.width / 2)} onChange={e => updateLayer(layer.id, { pivotX: Math.max(0, Math.min(layer.width, Number(e.target.value) || 0)) })}/></label><label>Pivô Y <input type="number" min="0" max={Math.round(layer.height)} style={{ width: 78 }} value={Math.round(layer.pivotY ?? layer.height / 2)} onChange={e => updateLayer(layer.id, { pivotY: Math.max(0, Math.min(layer.height, Number(e.target.value) || 0)) })}/></label><button className="secondary-button" onClick={() => moveLayer(layer.id, 1)} disabled={index === layers.length - 1} aria-label="Trazer camada para frente" title="Trazer para frente"><ArrowUp size={16}/></button><button className="secondary-button" onClick={() => moveLayer(layer.id, -1)} disabled={index === 0} aria-label="Enviar camada para trás" title="Enviar para trás"><ArrowDown size={16}/></button><button className="secondary-button" onClick={() => duplicateLayer(layer)} aria-label="Duplicar camada" title="Duplicar camada"><Copy size={16}/></button><button className="danger-button" onClick={() => removeLayer(layer.id)} aria-label="Remover camada"><Trash2 size={16}/></button></div>)}</div>}
       {selected && <p style={{ color: '#5b40cc', fontSize: 13 }}>Selecionado: {selected.name}</p>}
       <div className="notice" style={{ marginTop: 14 }}><Info size={16}/> {status}</div>
     </div>
