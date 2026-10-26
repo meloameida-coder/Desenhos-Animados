@@ -29,16 +29,14 @@ O workflow manual `Deploy to Cloudflare Pages` está em GitHub Actions. Para us�
 
 A chave publishable do Supabase pode ser usada no frontend. Nunca use `service_role` nem coloque as chaves dos provedores de IA no GitHub.
 
-## Situação atual
+## Situação atual (auditoria de 26/10/2026)
 
-- Login, cadastro e recuperação de senha pelo Supabase.
-- Projetos com criação, edição, status e exclusão de conteúdo vinculado.
-- Personagens, episódios/roteiros, cenas e músicas com criação, listagem, edição e exclusão, respeitando as políticas RLS.
-- Biblioteca de mídia com upload privado de imagens, áudios, vídeos e PDFs para Supabase Storage; acesso a arquivos com links temporários.
-- Assistente de texto conectado à Edge Function `creative-assistant` para ajudar a criar descrições de personagens, sinopses, roteiros, cenas, prompts visuais e letras.
-- Assistente criativo para roteiros, personagens, cenas, prompts e letras via Gemini (`GEMINI_API_KEY`).
-- Geração de imagens e voz/narração via OpenAI (`OPENAI_API_KEY`) e música via ElevenLabs (`ELEVENLABS_API_KEY`).
-- Geração de vídeo animado via Mage API com o modelo `ltx-video-096-distilled` (`MAGE_API_KEY`), usando as funções `creative-video` e `creative-video-status`. Os vídeos gerados são salvos no bucket privado e registrados na biblioteca.
-- Cadastre `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY` e `MAGE_API_KEY` nos Secrets das Edge Functions do Supabase, conforme os recursos que deseja ativar. Nunca coloque chaves secretas no frontend ou no repositório. A geração de imagem, música e vídeo pode exigir créditos pagos; confira o custo do provedor antes de gerar.
-- A compilação de produção foi aprovada no GitHub Actions. O site ainda não foi publicado: falta configurar a conta/token do Cloudflare Pages e executar o workflow de deploy.
-- As funções de IA estão implantadas no Supabase, mas a geração real precisa das chaves de provedor acima e de um teste com uma conta autenticada.
+- O app React + TypeScript + Vite usa Supabase para autenticação e dados persistentes.
+- O banco tem as tabelas `creative_projects`, `characters`, `episodes`, `scenes`, `songs`, `media_assets` e `generation_jobs`, com RLS habilitado. Na auditoria, havia 1 projeto, 3 personagens, 1 episódio, 1 cena, 1 música, 1 mídia e 17 tarefas de geração (5 concluídas e 12 com falha).
+- A página Hugging Face `taisse/desenhos-animados-ia` é uma interface estática separada, que salva projetos no navegador. Ela não está conectada ao banco Supabase nem ao motor de animação deste repositório.
+- As funções `creative-image`, `creative-voice`, `creative-music`, `creative-video` e `creative-video-status` foram bloqueadas para impedir chamadas a provedores que podem cobrar. A função `creative-assistant` continua chamando Gemini API; confirme cotas e faturamento do projeto Google antes de assumir custo zero.
+- Foi adicionado um primeiro motor 2D local em `public/animation-studio.js` e uma página de demonstração em `public/animation-studio-demo.html`. Ele desenha um personagem vetorial original com movimentos básicos (dança, andar, pular e acenar) e grava um clipe WebM usando Canvas/MediaRecorder no navegador, sem API de geração paga.
+- Este motor 2D é uma base funcional para movimentos controlados e montagem simples de clipes; não é ainda um modelo generativo de vídeo, não anima uma imagem arbitrária enviada pelo usuário e não produz vozes ou música.
+- Para abrir a demonstração depois de publicar o app Vite, acesse `/animation-studio-demo.html`. O workflow de Cloudflare Pages ainda depende da configuração de conta/token descrita acima. A demonstração não altera automaticamente a página Hugging Face.
+- Para geração de vídeo por modelo de IA, modelos como AnimateDiff estão documentados no Diffusers, mas precisam de computação adequada. Um Space estático não executa o modelo; a opção ZeroGPU pode oferecer quota gratuita limitada, enquanto hardware GPU dedicado tem cobrança. Consulte a documentação do Hugging Face antes de habilitar hardware ou assumir que a execução será gratuita.
+- Nunca coloque `service_role`, `GEMINI_API_KEY` ou tokens privados no frontend ou no repositório.
