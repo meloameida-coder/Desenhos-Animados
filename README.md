@@ -36,7 +36,9 @@ A chave publishable do Supabase pode ser usada no frontend. Nunca use `service_r
 - Personagens, episódios/roteiros, cenas e músicas com criação, listagem, edição e exclusão, respeitando as políticas RLS.
 - Biblioteca de mídia com upload privado de imagens, áudios, vídeos e PDFs para Supabase Storage; acesso a arquivos com links temporários.
 - Assistente de texto conectado à Edge Function `creative-assistant` para ajudar a criar descrições de personagens, sinopses, roteiros, cenas, prompts visuais e letras.
-- Geração de texto, imagem e voz/narração via OpenAI (`OPENAI_API_KEY`), música via ElevenLabs (`ELEVENLABS_API_KEY`) e vídeo animado via Gemini Omni Flash (`GEMINI_API_KEY`). Os arquivos gerados são salvos no bucket privado e registrados na biblioteca.
-- Cadastre `OPENAI_API_KEY`, `ELEVENLABS_API_KEY` e `GEMINI_API_KEY` nos Secrets das Edge Functions do Supabase. Nunca coloque essas chaves no frontend ou no repositório. Os provedores podem cobrar por geração e cada botão de geração dispara uma solicitação paga conforme o plano da conta.
+- Assistente criativo para roteiros, personagens, cenas, prompts e letras via Gemini (`GEMINI_API_KEY`).
+- Geração de imagens e voz/narração via OpenAI (`OPENAI_API_KEY`) e música via ElevenLabs (`ELEVENLABS_API_KEY`).
+- Geração de vídeo animado via Mage API com o modelo `ltx-video-096-distilled` (`MAGE_API_KEY`), usando as funções `creative-video` e `creative-video-status`. Os vídeos gerados são salvos no bucket privado e registrados na biblioteca.
+- Cadastre `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY` e `MAGE_API_KEY` nos Secrets das Edge Functions do Supabase, conforme os recursos que deseja ativar. Nunca coloque chaves secretas no frontend ou no repositório. A geração de imagem, música e vídeo pode exigir créditos pagos; confira o custo do provedor antes de gerar.
 - A compilação de produção foi aprovada no GitHub Actions. O site ainda não foi publicado: falta configurar a conta/token do Cloudflare Pages e executar o workflow de deploy.
 - As funções de IA estão implantadas no Supabase, mas a geração real precisa das chaves de provedor acima e de um teste com uma conta autenticada.
