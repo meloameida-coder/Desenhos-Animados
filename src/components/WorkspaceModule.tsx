@@ -175,18 +175,18 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     const jobType = task === 'script' || task === 'synopsis' ? 'script' : task === 'lyrics' ? 'music' : task === 'image_prompt' ? 'image' : task === 'video_prompt' ? 'video' : 'other'
     const prompt = task + ' · ' + projectTitle + ' · ' + JSON.stringify(context).slice(0, 1000)
     const { data: job } = await supabase.from('generation_jobs').insert({
-      user_id: userId, project_id: projectId, job_type: jobType, provider: 'openai',
+      user_id: userId, project_id: projectId, job_type: jobType, provider: 'gemini',
       status: 'processing', prompt,
     }).select('id').maybeSingle()
     const { data, error: invokeError } = await supabase.functions.invoke('creative-assistant', {
       body: { task, projectTitle, context },
     })
     if (invokeError || data?.error || typeof data?.text !== 'string') {
-      const failure = data?.error ? String(data.error) : 'O assistente não respondeu. Verifique se OPENAI_API_KEY foi configurada nos Secrets das Edge Functions do Supabase. ' + (invokeError?.message || '')
+      const failure = data?.error ? String(data.error) : 'A IA criativa não respondeu. Confira sua conexão e tente novamente. ' + (invokeError?.message || '')
       if (job?.id) await supabase.from('generation_jobs').update({ status: 'failed', error_message: failure }).eq('id', job.id)
       setGeneratingAI(false); setError(failure); return
     }
-    if (job?.id) await supabase.from('generation_jobs').update({ status: 'completed', result: { text: data.text, model: data.model || 'gpt-4o-mini' } }).eq('id', job.id)
+    if (job?.id) await supabase.from('generation_jobs').update({ status: 'completed', result: { text: data.text, model: data.model || 'gemini-2.5-flash', provider: data.provider || 'gemini' } }).eq('id', job.id)
     setGeneratingAI(false)
     const target = formElement.elements.namedItem(targetName)
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
