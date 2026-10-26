@@ -204,6 +204,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     const title = String(values.get('title') || 'Referência visual da cena').trim()
     if (!projectId) { setError('Escolha um projeto antes de gerar a imagem.'); return }
     if (!prompt) { setError('Descreva a cena ou preencha o prompt de imagem antes de gerar.'); return }
+    if (!window.confirm('A geração de imagem usa a API da OpenAI e pode consumir créditos ou gerar cobrança conforme seu plano. Deseja continuar?')) return
     setGeneratingImage(true); setError(''); setSuccessMessage('')
     const { data: job } = await supabase.from('generation_jobs').insert({
       user_id: userId, project_id: projectId, job_type: 'image', provider: 'openai',
@@ -230,6 +231,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     const title = String(values.get('title') || 'Narração').trim()
     if (!projectId) { setError('Escolha um projeto antes de gerar a voz.'); return }
     if (!text) { setError('Escreva a letra ou uma descrição para transformar em voz.'); return }
+    if (!window.confirm('A geração de voz usa a API da OpenAI e pode consumir créditos ou gerar cobrança conforme seu plano. Deseja continuar?')) return
     setGeneratingAI(true); setError(''); setSuccessMessage('')
     const { data: job } = await supabase.from('generation_jobs').insert({
       user_id: userId, project_id: projectId, job_type: 'voice', provider: 'openai',
@@ -260,6 +262,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     const prompt = [description, style ? 'Estilo musical: ' + style : '', purpose ? 'Finalidade: ' + purpose : '', lyrics ? 'Letra ou referência vocal: ' + lyrics : ''].filter(Boolean).join('\n')
     if (!projectId) { setError('Escolha um projeto antes de gerar a música.'); return }
     if (!prompt.trim()) { setError('Preencha o estilo, a letra ou a descrição musical antes de gerar.'); return }
+    if (!window.confirm('A geração de música usa a API da ElevenLabs. Seu plano já apresentou uma restrição de plano pago e pode haver cobrança. Deseja tentar mesmo assim?')) return
     setGeneratingAI(true); setError(''); setSuccessMessage('')
     const { data: job } = await supabase.from('generation_jobs').insert({
       user_id: userId, project_id: projectId, job_type: 'music', provider: 'elevenlabs',
@@ -287,6 +290,7 @@ export default function WorkspaceModule({ page, userId, projects }: { page: Work
     const aspectRatio = String(values.get('video_aspect') || '16:9')
     if (!projectId) { setError('Escolha um projeto antes de gerar o vídeo.'); return }
     if (!prompt) { setError('Descreva a ação da cena ou preencha o prompt de vídeo.'); return }
+    if (!window.confirm('A geração de vídeo usa o serviço Mage, que pode exigir créditos pagos. Deseja iniciar mesmo assim?')) return
     setGeneratingVideo(true); setError(''); setSuccessMessage('')
     const { data: job } = await supabase.from('generation_jobs').insert({
       user_id: userId, project_id: projectId, job_type: 'video', provider: 'mage',
