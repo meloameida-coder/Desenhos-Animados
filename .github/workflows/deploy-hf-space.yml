@@ -1,0 +1,44 @@
+name: Publicar estúdio no Hugging Face
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "huggingface-space/index.html"
+      - ".github/workflows/deploy-hf-space.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório do estúdio
+        uses: actions/checkout@v4
+
+      - name: Validar token e publicar no Space existente
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::Falta cadastrar o segredo HF_TOKEN em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          git -c http.extraheader="AUTHORIZATION: Bearer ${HF_TOKEN}" clone https://huggingface.co/spaces/taisse/desenhos-animados-ia hf-space
+          cp huggingface-space/index.html hf-space/index.html
+          cd hf-space
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- index.html; then
+            echo "O index.html do Space já está atualizado."
+            exit 0
+          fi
+
+          git add index.html
+          git commit -m "Atualiza estúdio de desenhos animados"
+          git -c http.extraheader="AUTHORIZATION: Bearer ${HF_TOKEN}" push origin HEAD:main
