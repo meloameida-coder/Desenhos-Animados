@@ -28,7 +28,8 @@ jobs:
             exit 1
           fi
 
-          git -c http.extraheader="AUTHORIZATION: Bearer ${HF_TOKEN}" clone https://huggingface.co/spaces/taisse/desenhos-animados-ia hf-space
+          HF_AUTH="$(printf '%s:%s' "__token__" "${HF_TOKEN}" | base64 -w 0)"
+          git -c http.extraheader="AUTHORIZATION: Basic ${HF_AUTH}" clone https://huggingface.co/spaces/taisse/desenhos-animados-ia hf-space
           cp huggingface-space/index.html hf-space/index.html
           cd hf-space
           git config user.name "github-actions[bot]"
@@ -41,4 +42,4 @@ jobs:
 
           git add index.html
           git commit -m "Atualiza estúdio de desenhos animados"
-          git -c http.extraheader="AUTHORIZATION: Bearer ${HF_TOKEN}" push origin HEAD:main
+          git -c http.extraheader="AUTHORIZATION: Basic ${HF_AUTH}" push origin HEAD:main
