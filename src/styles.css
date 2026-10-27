@@ -26,3 +26,28 @@
 
 .profile-settings label{display:flex;flex-direction:column;gap:7px;margin-top:7px;font-size:10px;font-weight:700;color:#77758a}.profile-settings input{width:100%;max-width:360px;border:1px solid #e8e6f1;border-radius:9px;padding:10px 11px;font-size:11px;color:#454456}.profile-settings .settings-feedback{margin-top:2px;color:#6c9b7b}.ai-settings-panel{align-items:flex-start}.ai-settings-panel>div{max-width:680px}.ai-settings-panel .secondary-button{flex-shrink:0}
 @media(max-width:600px){.settings-panel{align-items:flex-start;flex-direction:column}.profile-settings .primary-button,.ai-settings-panel .secondary-button{width:100%}.profile-settings input{max-width:none}.ai-settings-panel{gap:12px}}
+
+/* Tripo 3D character studio */
+.tripo-credit-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:18px 0;flex-wrap:wrap}
+.tripo-credit{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:13px}
+.tripo-credit svg{color:var(--purple)}.tripo-credit strong{color:var(--ink);font-size:16px}.tripo-credit-note{font-size:12px;color:var(--muted)}
+.tripo-panel,.tripo-result,.tripo-tip{background:#fff;border:1px solid var(--line);border-radius:20px;padding:clamp(18px,3vw,28px);margin:16px 0}
+.tripo-mode-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+.tripo-mode{display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:12px 16px;font-weight:600}
+.tripo-mode-active{border-color:#9b89f5;background:#f3f0ff;color:var(--purple-dark)}
+.tripo-image-picker{display:grid;grid-template-columns:minmax(180px,260px) 1fr;gap:20px;align-items:center}
+.tripo-upload{min-height:200px;border:1px dashed #b9addf;border-radius:16px;background:#faf9ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:15px;text-align:center;color:var(--purple);cursor:pointer;overflow:hidden}
+.tripo-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.tripo-upload strong{color:var(--ink);font-size:13px}.tripo-upload span{font-size:12px;color:var(--muted)}
+.tripo-upload img{display:block;width:100%;height:190px;object-fit:contain;border-radius:10px}
+.tripo-image-picker p,.tripo-tip p,.tripo-result>p{color:var(--muted);font-size:13px;line-height:1.7}
+.tripo-prompt-label{display:block;font-size:13px;font-weight:600;color:var(--ink)}
+.tripo-prompt-label textarea{display:block;width:100%;margin-top:9px;border:1px solid var(--line);border-radius:12px;padding:13px;resize:vertical;line-height:1.6}
+.tripo-prompt-label small{display:block;text-align:right;color:var(--muted);font-weight:400;margin-top:5px}
+.tripo-submit{margin-top:20px}.tripo-panel .notice{display:flex;gap:9px;align-items:flex-start;margin-top:16px}
+.tripo-result-head{display:flex;align-items:center;justify-content:space-between;gap:16px}.tripo-result-head h2{font:700 22px Manrope,sans-serif;margin:8px 0}
+.tripo-progress{height:28px;background:#f0eef8;border-radius:999px;margin:18px 0;position:relative;overflow:hidden}
+.tripo-progress>div{height:100%;background:#8b73ee;border-radius:999px;transition:width .3s}.tripo-progress span{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:700;color:#25223b}
+.tripo-render{display:block;width:min(100%,520px);max-height:420px;object-fit:contain;margin:18px auto;border:1px solid var(--line);border-radius:14px;background:#faf9fc}
+.tripo-result-actions{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin:18px 0}.tripo-result-actions>span{font-size:12px;color:var(--muted)}
+.tripo-tip{background:#f7f5ff;border-color:#e6e0ff}.tripo-tip strong{font-size:14px}
+@media(max-width:620px){.tripo-image-picker{grid-template-columns:1fr}.tripo-upload{min-height:170px}.tripo-mode{flex:1;font-size:12px;padding:11px 8px}}

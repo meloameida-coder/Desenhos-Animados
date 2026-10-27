@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import {
-  Aperture, ArrowDownRight, ArrowRight, AudioLines, BookOpen, Check, ChevronDown,
+  Aperture, ArrowDownRight, ArrowRight, AudioLines, BookOpen, Box, Check, ChevronDown,
   CircleHelp, Clapperboard, Clapperboard as Film, Compass, FileImage,
   FolderKanban, LayoutDashboard, Lightbulb, LogOut, Menu, Music2, Plus, Search, Trash2,
   Settings2, Sparkles, Users, WandSparkles, X, LoaderCircle
@@ -9,6 +9,7 @@ import {
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import WorkspaceModule from './components/WorkspaceModule'
 import AnimationStudio from './components/AnimationStudio'
+import TripoCharacterStudio from './components/TripoCharacterStudio'
 
 type CreativeProject = {
   id: string
@@ -32,6 +33,7 @@ const navItems = [
   { id: 'overview', label: 'Visão geral', icon: LayoutDashboard },
   { id: 'projects', label: 'Meus projetos', icon: FolderKanban },
   { id: 'characters', label: 'Personagens', icon: Users },
+  { id: 'character3d', label: 'Gerador de personagem 3D', icon: Box },
   { id: 'episodes', label: 'Episódios e roteiros', icon: BookOpen },
   { id: 'scenes', label: 'Cenas e storyboard', icon: Clapperboard },
   { id: 'animation', label: 'Motor de animação', icon: Film },
@@ -39,7 +41,7 @@ const navItems = [
   { id: 'library', label: 'Biblioteca de mídia', icon: FileImage },
 ]
 const pageTitles: Record<string, string> = {
-  overview: 'Visão geral', projects: 'Meus projetos', characters: 'Personagens',
+  overview: 'Visão geral', projects: 'Meus projetos', characters: 'Personagens', character3d: 'Gerador de personagem 3D',
   episodes: 'Episódios e roteiros', scenes: 'Cenas e storyboard', animation: 'Motor de animação', music: 'Músicas e áudio', library: 'Biblioteca de mídia',
 }
 
@@ -345,6 +347,8 @@ export default function App() {
               {projectError && <div className="notice error-notice">{projectError}</div>}
               {projectsLoading ? <div className="inline-loading"><LoaderCircle size={20} className="spin" /> Carregando seus projetos...</div> : filteredProjects.length ? <div className="project-grid all-projects">{filteredProjects.map((project, i) => <ProjectCard key={project.id} project={project} index={i} onClick={() => setEditingProject(project)} />)}<button className="new-project-card" onClick={() => setShowNewProject(true)}><span className="new-project-icon"><Plus size={22} /></span><strong>Nova criação</strong><span>Uma ideia esperando para nascer</span></button></div> : <EmptyProjects onCreate={() => setShowNewProject(true)} filtered={search.length > 0} />}
             </>
+           ) : activePage === 'character3d' ? (
+            <TripoCharacterStudio />
           ) : activePage === 'animation' ? (
             <AnimationStudio />
           ) : activePage === 'settings' ? (
