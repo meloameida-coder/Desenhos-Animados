@@ -3,7 +3,7 @@
 const css=".dai3{font:14px system-ui;color:#202033;background:#f7f7fb;border:1px solid #ddd;border-radius:16px;padding:16px;max-width:1100px;margin:auto}.dai3 *{box-sizing:border-box}.dai3 h3{margin:0 0 6px;color:#5b42d6}.dai3 p{color:#626276;margin:0 0 12px}.dai3-grid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px}.dai3-controls{background:#fff;border:1px solid #e5e5ef;border-radius:12px;padding:12px}.dai3 label{display:block;font-weight:650;margin:9px 0 4px}.dai3 input,.dai3 select{width:100%;padding:8px;border:1px solid #d8d8e5;border-radius:8px;font:inherit}.dai3 input[type=color]{height:36px;padding:2px}.dai3-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dai3 button{border:0;border-radius:8px;padding:10px 12px;font-weight:700;cursor:pointer;background:#e8e8f2}.dai3 button.primary{background:#5b42d6;color:#fff}.dai3 button:disabled{opacity:.5}.dai3 canvas{width:100%;height:auto;display:block;border-radius:12px;background:#b9e8ff}.dai3-status{padding:10px;background:#eeedf8;border-radius:8px;margin-top:9px;min-height:38px}.dai3 a{display:inline-block;margin-top:10px;font-weight:bold;color:#4b36bc}@media(max-width:700px){.dai3-grid{grid-template-columns:1fr}}";
 function mount(root){
  if(!root) return;
- root.innerHTML='<style>'+css+'</style><section class="dai3"><h3>Estúdio de animação 3D</h3><p>Monte um personagem 3D estilizado, escolha um movimento e exporte um clipe WebM. O motor usa Three.js no navegador, sem chave de API.</p><div class="dai3-grid"><form class="dai3-controls"><label>Nome</label><input id="d3-name" value="Luna" maxlength="40"><label>Estilo</label><select id="d3-kind"><option value="girl">Menina cartoon</option><option value="boy">Menino cartoon</option><option value="bunny">Coelhinho</option><option value="robot">Robô amigável</option></select><div class="dai3-row"><div><label>Pele</label><input id="d3-skin" type="color" value="#f2bd9b"></div><div><label>Roupa</label><input id="d3-clothes" type="color" value="#8b5cf6"></div></div><div class="dai3-row"><div><label>Cabelo</label><input id="d3-hair" type="color" value="#51352e"></div><div><label>Cenário</label><input id="d3-bg" type="color" value="#a9e6ff"></div></div><label>Movimento</label><select id="d3-motion"><option value="dance">Dançar</option><option value="walk">Andar</option><option value="jump">Pular</option><option value="wave">Acenar</option><option value="idle">Ficar em cena</option></select><label>Duração</label><select id="d3-duration"><option>4</option><option selected>6</option><option>8</option><option>10</option><option>12</option></select><label>Formato</label><select id="d3-format"><option value="wide">YouTube 16:9</option><option value="vertical">Shorts 9:16</option></select><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button type="button" id="d3-preview">Pré-visualizar</button><button type="button" class="primary" id="d3-export">Gerar vídeo</button></div></form><div><canvas id="d3-canvas" width="960" height="540" aria-label="Pré-visualização do personagem 3D"></canvas><div class="dai3-status" id="d3-status" role="status" aria-live="polite">Carregando motor 3D…</div><a id="d3-download" hidden>Baixar vídeo 3D</a></div></div><p style="font-size:12px;margin-top:12px">Esta é uma primeira versão 3D feita com formas tridimensionais estilizadas, não um modelo humano realista gerado por IA. A primeira carga precisa de internet para obter a biblioteca Three.js.</p></section>';
+ root.innerHTML='<style>'+css+'</style><section class="dai3"><h3>Estúdio de animação 3D</h3><p>Monte um personagem 3D estilizado, escolha um movimento e exporte um clipe WebM. O motor usa Three.js no navegador, sem chave de API.</p><div class="dai3-grid"><form class="dai3-controls"><label>Nome</label><input id="d3-name" value="Luna" maxlength="40"><label>Estilo</label><select id="d3-kind"><option value="luna" selected>Luna — arco-íris</option><option value="girl">Menina cartoon</option><option value="boy">Menino cartoon</option><option value="bunny">Coelhinho</option><option value="robot">Robô amigável</option></select><div class="dai3-row"><div><label>Pele</label><input id="d3-skin" type="color" value="#f2bd9b"></div><div><label>Roupa</label><input id="d3-clothes" type="color" value="#8b5cf6"></div></div><div class="dai3-row"><div><label>Cabelo</label><input id="d3-hair" type="color" value="#51352e"></div><div><label>Cenário</label><input id="d3-bg" type="color" value="#a9e6ff"></div></div><label>Movimento</label><select id="d3-motion"><option value="dance">Dançar</option><option value="walk">Andar</option><option value="jump">Pular</option><option value="wave">Acenar</option><option value="idle">Ficar em cena</option></select><label>Duração</label><select id="d3-duration"><option>4</option><option selected>6</option><option>8</option><option>10</option><option>12</option></select><label>Formato</label><select id="d3-format"><option value="wide">YouTube 16:9</option><option value="vertical">Shorts 9:16</option></select><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button type="button" id="d3-preview">Pré-visualizar</button><button type="button" class="primary" id="d3-export">Gerar vídeo</button></div></form><div><canvas id="d3-canvas" width="960" height="540" aria-label="Pré-visualização do personagem 3D"></canvas><div class="dai3-status" id="d3-status" role="status" aria-live="polite">Carregando motor 3D…</div><a id="d3-download" hidden>Baixar vídeo 3D</a></div></div><p style="font-size:12px;margin-top:12px">Luna é a personagem principal em 3D estilizado, com touca arco-íris, cabelo cacheado, camiseta colorida, jardineira jeans e mochila; ainda não é um modelo realista gerado por IA. A primeira carga precisa de internet para obter a biblioteca Three.js.</p></section>';
  const $=id=>root.querySelector('#'+id),canvas=$('d3-canvas'),status=$('d3-status'),download=$('d3-download'),previewBtn=$('d3-preview'),exportBtn=$('d3-export');
  let THREE,renderer,scene,camera,character,raf=0,busy=false,blobUrl='';
  const val=id=>$(id).value;
@@ -15,10 +15,10 @@ function mount(root){
   const group=new THREE.Group(),skin=mat(c.kind==='robot'?'#a8cbd8':c.skin),clothes=mat(c.kind==='robot'?'#8798ac':c.clothes),hair=mat(c.hair),dark=mat('#392b2a'),white=mat('#fffdf7'),iris=mat('#5b3528'),shoe=mat('#fff6ed'),pink=mat('#ed9eaa'),blush=mat('#ef9b9b'),accent=mat('#ffe08a');
   const head=new THREE.Group();head.position.y=2.18;group.add(head);
   sphere(head,0,0,0,.57,.61,.52,skin);
-  if(c.kind==='girl'||c.kind==='boy'){
+  if(c.kind==='girl'||c.kind==='boy'||c.kind==='luna'){
    sphere(head,0,.30,-.03,.59,.36,.53,hair);
    sphere(head,-.39,.06,.20,.20,.30,.20,hair);sphere(head,.39,.06,.20,.20,.30,.20,hair);
-   if(c.kind==='girl'){sphere(head,-.28,.39,.25,.24,.22,.20,hair);sphere(head,.03,.47,.24,.25,.22,.20,hair);sphere(head,.29,.38,.24,.22,.22,.20,hair);sphere(head,-.08,.31,.39,.22,.20,.15,hair);sphere(head,.16,.30,.40,.22,.19,.15,hair);}
+   if(c.kind==='girl'||c.kind==='luna'){sphere(head,-.28,.39,.25,.24,.22,.20,hair);sphere(head,.03,.47,.24,.25,.22,.20,hair);sphere(head,.29,.38,.24,.22,.22,.20,hair);sphere(head,-.08,.31,.39,.22,.20,.15,hair);sphere(head,.16,.30,.40,.22,.19,.15,hair); if(c.kind==='luna'){for(let i=0;i<18;i++){const a=i*Math.PI*2/18; sphere(head,Math.cos(a)*.49,-.12+Math.sin(i*2.7)*.10,Math.sin(a)*.34+.02,.13,.14,.13,hair);}}}
   } else if(c.kind==='bunny'){
    sphere(head,-.25,.75,0,.17,.52,.15,skin);sphere(head,.25,.75,0,.17,.52,.15,skin);
    sphere(head,-.25,.77,.13,.08,.34,.05,pink);sphere(head,.25,.77,.13,.08,.34,.05,pink);
@@ -26,12 +26,29 @@ function mount(root){
   for(const x of [-.22,.22]){sphere(head,x,.03,.458,.125,.155,.065,white);sphere(head,x,.025,.512,.078,.105,.045,iris);sphere(head,x,.03,.548,.035,.045,.035,white);sphere(head,x,.205,.46,.09,.035,.045,dark);sphere(head,x,-.16,.445,.105,.055,.025,blush);}
   sphere(head,0,-.12,.50,.055,.04,.035,mat('#d18a78'));
   const smile=new THREE.Mesh(new THREE.TorusGeometry(.13,.018,8,24,Math.PI),mat('#9a4f54'));smile.position.set(0,-.22,.485);smile.rotation.z=Math.PI;head.add(smile);
-  const body=sphere(group,0,1.35,0,.43,.57,.30,clothes);
-  sphere(group,0,1.78,0,.34,.13,.29,clothes);
-  /* Pequenos detalhes dão mais personalidade ao figurino. */
-  sphere(group,0,1.48,.294,.10,.10,.035,accent);
-  sphere(group,-.20,1.25,.267,.045,.045,.025,accent);sphere(group,.20,1.25,.267,.045,.045,.025,accent);
-  sphere(group,0,1.02,0,.31,.16,.24,clothes);
+  const shirt=mat(c.kind==='luna'?'#f34f9d':c.clothes),denim=mat('#2878bb'),body=sphere(group,0,1.35,0,.43,.57,.30,c.kind==='luna'?denim:clothes);
+  sphere(group,0,1.78,0,.34,.13,.29,c.kind==='luna'?shirt:clothes);
+  /* Detalhes do figurino exclusivo da Luna: camiseta arco-íris e jardineira jeans. */
+  if(c.kind==='luna'){
+   const stripeColors=['#f44768','#ff9f43','#ffe45e','#48c774','#42b9ff','#8664e8'];
+   stripeColors.forEach((col,i)=>{const stripe=sphere(group,0,1.72-i*.075,.276,.31,.043,.025,mat(col));stripe.scale.x=0.88;});
+   sphere(group,0,1.30,.285,.34,.30,.07,denim);
+   capsule(group,[-.25,1.63,.28],[-.19,1.88,.22],.055,denim);capsule(group,[.25,1.63,.28],[.19,1.88,.22],.055,denim);
+   sphere(group,0,1.37,.36,.12,.10,.025,mat('#fff0f5'));sphere(group,0,1.37,.39,.08,.035,.018,mat('#ffcf4a'));
+   sphere(group,-.22,1.15,.30,.035,.035,.018,accent);sphere(group,.22,1.15,.30,.035,.035,.018,accent);
+   /* Mochila rosa visível atrás do ombro. */
+   sphere(group,-.42,1.47,-.12,.22,.34,.17,mat('#ed5da8'));
+   sphere(group,-.42,1.48,.03,.13,.12,.035,mat('#ffb6d8'));
+   /* Touca de lã com faixas coloridas e pompom. */
+   sphere(head,0,.49,-.015,.65,.31,.56,mat('#7b55d9'));
+   const hatBands=['#f05d9b','#ff9f43','#ffe45e','#4dcc78','#38bdf8','#8b5cf6'];
+   hatBands.forEach((col,i)=>{const band=new THREE.Mesh(new THREE.TorusGeometry(.48-i*.006,.055,8,48),mat(col));band.position.set(0,.36+i*.035,.02);band.scale.set(1,.60,1);head.add(band);});
+   sphere(head,0,.78,-.02,.13,.12,.13,mat('#f04eaa'));sphere(head,.07,.81,-.01,.10,.10,.10,mat('#ffcf4a'));sphere(head,-.07,.81,-.01,.10,.10,.10,mat('#42b9ff'));
+  } else {
+   sphere(group,0,1.48,.294,.10,.10,.035,accent);
+   sphere(group,-.20,1.25,.267,.045,.045,.025,accent);sphere(group,.20,1.25,.267,.045,.045,.025,accent);
+   sphere(group,0,1.02,0,.31,.16,.24,clothes);
+  }
   const arms=[];
   for(const side of [-1,1]){
    const pivot=new THREE.Group();pivot.position.set(side*.38,1.66,0);group.add(pivot);
@@ -43,7 +60,7 @@ function mount(root){
    capsule(pivot,[0,0,0],[0,-.58,0],.13,mat('#494351'));
    sphere(pivot,0,-.59,.10,.19,.105,.28,shoe);sphere(pivot,0,-.56,.31,.10,.035,.018,accent);legs.push({pivot,side});
   }
-  if(c.kind==='girl'){sphere(group,-.36,2.56,.02,.13,.13,.12,accent);sphere(group,.36,2.56,.02,.13,.13,.12,accent);}
+  if(c.kind==='girl'||c.kind==='luna'){sphere(group,-.36,2.56,.02,.13,.13,.12,accent);sphere(group,.36,2.56,.02,.13,.13,.12,accent);}
   return {group,head,arms,legs,body};
  }
  function setup(c){
