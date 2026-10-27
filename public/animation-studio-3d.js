@@ -12,22 +12,26 @@ function mount(root){
  function sphere(parent,x,y,z,sx,sy,sz,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);parent.add(m);return m;}
  function capsule(parent,a,b,r,material){const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b),delta=end.clone().sub(start);const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,Math.max(.01,delta.length()-2*r),6,12),material);m.position.copy(start.clone().add(end).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());parent.add(m);return m;}
  function makeCharacter(c){
-  const group=new THREE.Group(),skin=mat(c.kind==='robot'?'#a8cbd8':c.skin),clothes=mat(c.kind==='robot'?'#8798ac':c.clothes),hair=mat(c.hair),dark=mat('#392b2a'),white=mat('#fffdf7'),iris=mat('#5b3528'),shoe=mat('#f9f6f3'),pink=mat('#ed9eaa');
+  const group=new THREE.Group(),skin=mat(c.kind==='robot'?'#a8cbd8':c.skin),clothes=mat(c.kind==='robot'?'#8798ac':c.clothes),hair=mat(c.hair),dark=mat('#392b2a'),white=mat('#fffdf7'),iris=mat('#5b3528'),shoe=mat('#fff6ed'),pink=mat('#ed9eaa'),blush=mat('#ef9b9b'),accent=mat('#ffe08a');
   const head=new THREE.Group();head.position.y=2.18;group.add(head);
   sphere(head,0,0,0,.57,.61,.52,skin);
   if(c.kind==='girl'||c.kind==='boy'){
    sphere(head,0,.30,-.03,.59,.36,.53,hair);
    sphere(head,-.39,.06,.20,.20,.30,.20,hair);sphere(head,.39,.06,.20,.20,.30,.20,hair);
-   if(c.kind==='girl'){sphere(head,-.28,.39,.25,.24,.22,.20,hair);sphere(head,.03,.47,.24,.25,.22,.20,hair);sphere(head,.29,.38,.24,.22,.22,.20,hair);}
+   if(c.kind==='girl'){sphere(head,-.28,.39,.25,.24,.22,.20,hair);sphere(head,.03,.47,.24,.25,.22,.20,hair);sphere(head,.29,.38,.24,.22,.22,.20,hair);sphere(head,-.08,.31,.39,.22,.20,.15,hair);sphere(head,.16,.30,.40,.22,.19,.15,hair);}
   } else if(c.kind==='bunny'){
    sphere(head,-.25,.75,0,.17,.52,.15,skin);sphere(head,.25,.75,0,.17,.52,.15,skin);
    sphere(head,-.25,.77,.13,.08,.34,.05,pink);sphere(head,.25,.77,.13,.08,.34,.05,pink);
   } else {sphere(head,0,.55,0,.27,.12,.27,mat('#738da4'));sphere(head,-.59,.02,0,.12,.16,.12,clothes);sphere(head,.59,.02,0,.12,.16,.12,clothes);}
-  for(const x of [-.22,.22]){sphere(head,x,.03,.458,.115,.145,.06,white);sphere(head,x,.025,.512,.073,.10,.04,iris);sphere(head,x,.03,.548,.03,.035,.045,white);}
+  for(const x of [-.22,.22]){sphere(head,x,.03,.458,.125,.155,.065,white);sphere(head,x,.025,.512,.078,.105,.045,iris);sphere(head,x,.03,.548,.035,.045,.035,white);sphere(head,x,.205,.46,.09,.035,.045,dark);sphere(head,x,-.16,.445,.105,.055,.025,blush);}
   sphere(head,0,-.12,.50,.055,.04,.035,mat('#d18a78'));
   const smile=new THREE.Mesh(new THREE.TorusGeometry(.13,.018,8,24,Math.PI),mat('#9a4f54'));smile.position.set(0,-.22,.485);smile.rotation.z=Math.PI;head.add(smile);
   const body=sphere(group,0,1.35,0,.43,.57,.30,clothes);
   sphere(group,0,1.78,0,.34,.13,.29,clothes);
+  /* Pequenos detalhes dão mais personalidade ao figurino. */
+  sphere(group,0,1.48,.294,.10,.10,.035,accent);
+  sphere(group,-.20,1.25,.267,.045,.045,.025,accent);sphere(group,.20,1.25,.267,.045,.045,.025,accent);
+  sphere(group,0,1.02,0,.31,.16,.24,clothes);
   const arms=[];
   for(const side of [-1,1]){
    const pivot=new THREE.Group();pivot.position.set(side*.38,1.66,0);group.add(pivot);
@@ -37,9 +41,9 @@ function mount(root){
   for(const side of [-1,1]){
    const pivot=new THREE.Group();pivot.position.set(side*.19,.94,0);group.add(pivot);
    capsule(pivot,[0,0,0],[0,-.58,0],.13,mat('#494351'));
-   sphere(pivot,0,-.59,.10,.19,.105,.28,shoe);legs.push({pivot,side});
+   sphere(pivot,0,-.59,.10,.19,.105,.28,shoe);sphere(pivot,0,-.56,.31,.10,.035,.018,accent);legs.push({pivot,side});
   }
-  if(c.kind==='girl'){sphere(group,0,1.83,.03,.10,.10,.10,mat('#ffd166'));}
+  if(c.kind==='girl'){sphere(group,-.36,2.56,.02,.13,.13,.12,accent);sphere(group,.36,2.56,.02,.13,.13,.12,accent);}
   return {group,head,arms,legs,body};
  }
  function setup(c){
