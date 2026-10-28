@@ -113,7 +113,7 @@ function mount(root){
   const generation=++importGeneration;await engineReady;if(!THREE||!OBJLoader||!MTLLoader){status.textContent='O motor 3D ainda não está pronto. Atualize a página e tente novamente.';return;}
   loadLibraryBtn.disabled=true;status.textContent='Baixando o modelo escolhido e suas texturas…';
   try{
-   const encodedPath=path.split('/').map(part=>encodeURIComponent(part)).join('/'),base=encodedPath.slice(0,encodedPath.lastIndexOf('/')+1),stem=path.split('/').pop().replace(/\.obj$/i,'');
+   const assetRoot='https://cdn.jsdelivr.net/gh/meloameida-coder/Desenhos-Animados@main/',encodedPath=assetRoot+path.split('/').map(part=>encodeURIComponent(part)).join('/'),base=encodedPath.slice(0,encodedPath.lastIndexOf('/')+1),stem=path.split('/').pop().replace(/\.obj$/i,'');
    const objResponse=await fetch(encodedPath);if(!objResponse.ok)throw Error('Não consegui baixar o OBJ (HTTP '+objResponse.status+').');const objText=await objResponse.text();
    const mtlPath=base+encodeURIComponent(stem+'.mtl'),mtlResponse=await fetch(mtlPath);if(!mtlResponse.ok)throw Error('O arquivo MTL correspondente não foi encontrado.');
    const mtlText=await mtlResponse.text();const manager=new THREE.LoadingManager();manager.setURLModifier(url=>{let file=url.split(/[?#]/)[0].replace(/\\/g,'/').split('/').pop();try{file=decodeURIComponent(file)}catch(_){}return base+encodeURIComponent(file);});
