@@ -3,7 +3,7 @@ import { Box, CheckCircle2, CircleAlert, Download, ImagePlus, LoaderCircle, Spar
 import { supabase } from '../lib/supabase'
 
 type TaskResult = { taskId: string; status: string; progress: number; modelUrl?: string | null; previewUrl?: string | null; creditsConsumed?: number | null; message?: string | null }
-type FunctionReply = { error?: string; suggestion?: string | null; taskId?: string; status?: string; progress?: number; modelUrl?: string | null; previewUrl?: string | null; creditsConsumed?: number | null; balance?: number | null }
+type FunctionReply = { error?: string; suggestion?: string | null; message?: string | null; taskId?: string; status?: string; progress?: number; modelUrl?: string | null; previewUrl?: string | null; creditsConsumed?: number | null; balance?: number | null }
 
 export default function TripoCharacterStudio() {
   const [mode, setMode] = useState<'text' | 'image'>('image')
