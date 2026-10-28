@@ -1,0 +1,16 @@
+newmtl front_material
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.05 0.05 0.05
+Ns 8.0
+d 1.0
+map_Kd WhatsApp_Image_2026-10-28_at_08_12_08_front.png
+map_d WhatsApp_Image_2026-10-28_at_08_12_08_front.png
+
+newmtl back_material
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.02 0.02 0.02
+Ns 4.0
+d 1.0
+map_Kd WhatsApp_Image_2026-10-28_at_08_12_08_back_approx.png

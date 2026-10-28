@@ -1,0 +1,14 @@
+MODELOS OBJ 3D — DESENHOS INFANTIS
+
+Conteúdo: 15 modelos OBJ, um para cada imagem fornecida, organizados por categoria.
+Cada modelo vem com:
+- .obj: malha 3D de relevo raso com profundidade aproximada;
+- .mtl: materiais;
+- *_front.png: textura frontal com transparência estimada;
+- *_back_approx.png: textura traseira aproximada.
+
+IMPORTANTE:
+Estes arquivos são modelos 3D tipo recorte/relevo, úteis para pré-visualização e composição.
+Uma única imagem 2D não contém informação suficiente para reconstruir o corpo 3D real por todos os lados.
+Para que o arquivo tenha uma parte traseira utilizável, foi criada uma textura espelhada aproximada; ela NÃO é uma reconstrução real das costas do personagem. Os modelos não são esculturas 3D completas e não são adequados para impressão 3D sem retrabalho de malha.
+Mantenha os arquivos .obj, .mtl e as texturas juntos na mesma pasta ao importar. No Blender, use File > Import > Wavefront (.obj).
