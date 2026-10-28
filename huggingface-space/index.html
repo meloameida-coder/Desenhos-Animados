@@ -7,6 +7,7 @@
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#101323;color:white}header{padding:22px 7%;background:#191d35;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.logo{font-size:23px;font-weight:bold}.logo span{color:#ffcf58}.hero{text-align:center;padding:55px 20px;background:linear-gradient(135deg,#29205a,#124b65)}.hero h1{font-size:clamp(32px,6vw,54px);margin:10px 0}.hero p{color:#e0e6ff;line-height:1.7}.button{display:inline-block;background:#ffcf58;color:#17172b;border:0;padding:13px 20px;border-radius:12px;font-weight:bold;cursor:pointer;text-decoration:none;margin:6px}main{max-width:1100px;margin:auto;padding:35px 20px}h2{color:#ffcf58}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}.card{background:#1d223b;border:1px solid #343b5c;padding:22px;border-radius:18px}.emoji{font-size:38px}label{display:block;margin:15px 0 7px}input,textarea,select{width:100%;padding:12px;border-radius:9px;border:1px solid #454c70;background:#101323;color:white;font:inherit}textarea{min-height:100px;resize:vertical}.project{margin-top:25px}.saved-item{background:#292f4d;border-radius:10px;padding:13px;margin:10px 0;overflow-wrap:anywhere}.muted{color:#b9c2df;line-height:1.6}footer{text-align:center;padding:30px;color:#b9c2df}.studio-shell{background:#fff;color:#202033;padding:12px;border-radius:18px}.studio-shell p{color:#555}#animation-studio,#animation-studio-3d{min-height:200px}.studio-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.studio-tab{background:#29205a;color:#fff;border:1px solid #6555a8;padding:12px 18px;border-radius:12px;font-weight:bold;cursor:pointer}.studio-tab.active{background:#ffcf58;color:#17172b}.studio-panel[hidden]{display:none}.tripo-card{background:#f7f7fb;color:#202033;border-radius:12px;padding:18px;max-width:720px}.tripo-card p{color:#555}.tripo-card label{color:#202033;font-weight:bold}.tripo-card input,.studio-shell #tripo-prompt{background:#fff;color:#202033;border:1px solid #c8c8d8}.studio-shell #tripo-image{color:#202033}.studio-shell #tripo-status{white-space:pre-wrap}
 </style>
+<script type="importmap">{"imports":{"three":"https://esm.sh/three@0.160.0"}}</script>
 </head>
 <body>
 <header><div class="logo">🎨 Desenhos <span>Animados IA</span></div><span>Seu estúdio criativo infantil</span></header>
@@ -89,7 +90,7 @@ renderCharacterLibrary();
 <script>
 (function(){const mount=window.mountCartoonAnimationStudio;const root=document.getElementById("animation-studio");if(typeof mount==="function"){mount(root)}else{root.innerHTML="<p>Não foi possível carregar o motor. Atualize a página ou tente novamente mais tarde.</p>"}})();
 </script>
-<script src="https://cdn.jsdelivr.net/gh/meloameida-coder/Desenhos-Animados@05a26e27f4e1f22b6ba116c22419799d1c7c9957/public/animation-studio-3d.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/meloameida-coder/Desenhos-Animados@939da5d78c9189551f2a0f132a1f3b0de835d671/public/animation-studio-3d.js"></script>
 <script>
 (function(){
 const b2=document.getElementById("tab-2d"),b3=document.getElementById("tab-3d"),bt=document.getElementById("tab-tripo"),p2=document.getElementById("panel-2d"),p3=document.getElementById("panel-3d"),pt=document.getElementById("panel-tripo");
