@@ -1,0 +1,51 @@
+name: Extract 3D character assets
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  extract-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate and extract character ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="imagens_infantis_modelos_OBJ_3D.zip"
+          test -f "$archive" || { echo "Arquivo ZIP não encontrado: $archive"; exit 1; }
+          echo "Arquivos dentro do ZIP:"
+          unzip -Z1 "$archive" | tee /tmp/zip-files.txt
+          if grep -E '(^/|(^|/)\.\.(/|$))' /tmp/zip-files.txt; then
+            echo "O ZIP contém caminhos inseguros; extração interrompida."
+            exit 1
+          fi
+          mkdir -p /tmp/character-assets public/personagens-obj
+          unzip -q "$archive" -d /tmp/character-assets
+          # Copy model files and textures while preserving category folders.
+          find /tmp/character-assets -type f \( -iname '*.obj' -o -iname '*.mtl' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname 'LEIA-ME.txt' -o -iname 'README.txt' \) -print0 |
+          while IFS= read -r -d '' file; do
+            rel="${file#/tmp/character-assets/}"
+            dest="public/personagens-obj/$rel"
+            mkdir -p "$(dirname "$dest")"
+            cp "$file" "$dest"
+          done
+          echo "Resumo dos arquivos extraídos:"
+          find public/personagens-obj -type f | sort
+          echo "OBJ encontrados: $(find public/personagens-obj -type f -iname '*.obj' | wc -l)"
+          echo "MTL encontrados: $(find public/personagens-obj -type f -iname '*.mtl' | wc -l)"
+          echo "Texturas encontradas: $(find public/personagens-obj -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) | wc -l)"
+      - name: Commit extracted assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/personagens-obj
+          if git diff --cached --quiet; then
+            echo "Nenhum arquivo novo para salvar."
+          else
+            git commit -m "Extract 3D character models and textures"
+            git push
+          fi
