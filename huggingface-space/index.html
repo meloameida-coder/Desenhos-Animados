@@ -22,7 +22,7 @@
 </div>
 <section id="biblioteca-personagens" class="project">
 <h2>🖼️ Biblioteca de personagens</h2>
-<p class="muted">Importe imagens do computador para preparar referências dos seus personagens. Elas ficam guardadas neste navegador. Para usar no gerador 3D, baixe a imagem do personagem e envie no Hunyuan3D.</p>
+<p class="muted">Importe imagens do computador para preparar referências dos seus personagens. Elas ficam guardadas neste navegador. As imagens podem ser baixadas pela própria biblioteca para uso em outros programas.</p>
 <div class="card">
 <form id="characterImportForm">
 <label for="characterName">Nome do personagem</label><input id="characterName" required maxlength="80" placeholder="Ex.: Moli">
@@ -34,8 +34,8 @@
 </form>
 </div>
 <div id="characterLibrary" class="project" aria-live="polite"></div>
-<div style="margin-top:14px"><a class="button" href="https://tencent-hunyuan3d.hf.space/" target="_blank" rel="noopener noreferrer">🧊 Abrir gerador 3D</a></div>
-<p class="muted">Importante: esta biblioteca guarda as imagens neste navegador e computador; ainda não sincroniza entre dispositivos nem envia imagens automaticamente para o gerador externo. Para importar arquivos diretamente do Google Drive, primeiro baixe-os do Drive para o computador.</p>
+
+<p class="muted">Importante: esta biblioteca guarda as imagens neste navegador e computador; ainda não sincroniza entre dispositivos. Para importar arquivos diretamente do Google Drive, primeiro baixe-os do Drive para o computador.</p>
 </section>
 <section id="criar" class="project"><h2>📝 Criar um novo projeto</h2><div class="card">
 <form id="projectForm">
@@ -48,20 +48,7 @@
 <button class="button" type="submit">💾 Salvar projeto</button>
 </form></div></section>
 <section class="project"><h2>📚 Meus projetos salvos</h2><p class="muted">Os projetos ficam salvos neste navegador. Para sincronizar entre dispositivos, ainda é necessário conectar a autenticação e o banco de dados Supabase.</p><div id="projects"></div></section>
-<section id="motor" class="project"><h2>🎞️ Estúdios de animação</h2><p class="muted">Escolha o modo de criação. O estúdio 2D continua disponível; o 3D funciona em uma aba separada.</p><div class="studio-tabs" role="tablist" aria-label="Modo de animação"><button class="studio-tab active" id="tab-2d" type="button" role="tab" aria-selected="true" aria-controls="panel-2d">🎨 Estúdio 2D</button><button class="studio-tab" id="tab-3d" type="button" role="tab" aria-selected="false" aria-controls="panel-3d">🧊 Estúdio 3D (novo)</button><button class="studio-tab" id="tab-tripo" type="button" role="tab" aria-selected="false" aria-controls="panel-tripo">✨ Tripo3D IA</button></div><div class="studio-panel" id="panel-2d"><h2>Motor de animação 2D — criar e movimentar personagem</h2><p class="muted">Personalize o personagem, escolha dançar, andar, pular ou acenar, visualize e gere um clipe curto. Este motor 2D funciona localmente no navegador e não usa chave de API.</p><div class="studio-shell"><div id="animation-studio"><p>Carregando o motor de animação…</p></div></div><p class="muted">Limitação transparente: este motor cria animação 2D procedural com personagens desenhados por código; ainda não transforma uma imagem enviada em animação realista por IA. O arquivo gerado é WebM.</p></div><div class="studio-panel" id="panel-3d" hidden><h2>🧊 Motor de animação 3D</h2><p class="muted">Crie um personagem tridimensional estilizado, escolha movimentos e exporte um clipe separado. O motor 3D é experimental e não altera os vídeos 2D.</p><div class="studio-shell"><div id="animation-studio-3d"><p>Carregando o motor 3D…</p></div></div></div><div class="studio-panel" id="panel-tripo" hidden>
-<h2>✨ Gerador 3D de código aberto</h2>
-<p class="muted">Este espaço usa o Hunyuan3D, modelo de geração 3D de código aberto da Tencent, em uma demonstração pública do Hugging Face. Ele não usa a API nem os créditos do Tripo3D.</p>
-<div class="studio-shell" style="padding:10px">
-<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-<a class="button" href="https://huggingface.co/spaces/tencent/Hunyuan3D-2" target="_blank" rel="noopener noreferrer">Abrir gerador em nova aba</a>
-<a class="button" href="https://github.com/Tencent/Hunyuan3D-2" target="_blank" rel="noopener noreferrer">Código-fonte</a>
-</div>
-<p class="muted">Escolha Text Prompt para descrever o personagem ou Image Prompt para enviar uma imagem. Se a demonstração não mostrar a opção de texto, ela pode estar desativada no serviço público. Após gerar, use o botão de download do próprio gerador para salvar o modelo.</p>
-<div style="position:relative;width:100%;height:min(78vh,900px);min-height:620px;border:1px solid #d8d8e5;border-radius:12px;overflow:hidden;background:#fff">
-<iframe title="Gerador 3D Hunyuan3D" src="https://tencent-hunyuan3d.hf.space/" loading="lazy" allow="clipboard-read; clipboard-write" style="width:100%;height:100%;border:0;background:#fff" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-</div>
-<p class="muted">Aviso: o processamento é feito pelo serviço público do Hugging Face, não pelo seu site. Pode haver fila, limite diário, indisponibilidade ou mudanças no serviço. Não envie imagens privadas ou sensíveis.</p>
-</div></div>
+<section id="motor" class="project"><h2>🎞️ Estúdios de animação</h2><p class="muted">Escolha o modo de criação. O estúdio 2D continua disponível; o 3D funciona em uma aba separada.</p><div class="studio-tabs" role="tablist" aria-label="Modo de animação"><button class="studio-tab active" id="tab-2d" type="button" role="tab" aria-selected="true" aria-controls="panel-2d">🎨 Estúdio 2D</button><button class="studio-tab" id="tab-3d" type="button" role="tab" aria-selected="false" aria-controls="panel-3d">🧊 Estúdio 3D (novo)</button></div><div class="studio-panel" id="panel-2d"><h2>Motor de animação 2D — criar e movimentar personagem</h2><p class="muted">Personalize o personagem, escolha dançar, andar, pular ou acenar, visualize e gere um clipe curto. Este motor 2D funciona localmente no navegador e não usa chave de API.</p><div class="studio-shell"><div id="animation-studio"><p>Carregando o motor de animação…</p></div></div><p class="muted">Limitação transparente: este motor cria animação 2D procedural com personagens desenhados por código; ainda não transforma uma imagem enviada em animação realista por IA. O arquivo gerado é WebM.</p></div><div class="studio-panel" id="panel-3d" hidden><h2>🧊 Motor de animação 3D</h2><p class="muted">Crie um personagem tridimensional estilizado, escolha movimentos e exporte um clipe separado. O motor 3D é experimental e não altera os vídeos 2D.</p><div class="studio-shell"><div id="animation-studio-3d"><p>Carregando o motor 3D…</p></div></div></div>
 <section class="project"><h2>🔌 Integrações e estado</h2><div class="card"><p class="muted">Esta página já inclui o motor de animação 2D. A gravação de voz, geração musical, animação generativa por IA e sincronização online Supabase ainda não estão conectadas nesta página. Não insira chaves secretas neste site.</p></div></section>
 </main>
 <footer>Desenhos Animados IA · Um mundo de criatividade para crianças 🌈</footer>
@@ -93,9 +80,9 @@ renderCharacterLibrary();
 <script src="https://cdn.jsdelivr.net/gh/meloameida-coder/Desenhos-Animados@98e3823424acc52229339ecb7ed5c6ffb5b9fa8f/public/animation-studio-3d.js"></script>
 <script>
 (function(){
-const b2=document.getElementById("tab-2d"),b3=document.getElementById("tab-3d"),bt=document.getElementById("tab-tripo"),p2=document.getElementById("panel-2d"),p3=document.getElementById("panel-3d"),pt=document.getElementById("panel-tripo");
-function select(mode){const is3d=mode==="3d",istripo=mode==="tripo";p2.hidden=is3d||istripo;p3.hidden=!is3d;pt.hidden=!istripo;[[b2,!is3d&&!istripo],[b3,is3d],[bt,istripo]].forEach(([b,on])=>{b.classList.toggle("active",on);b.setAttribute("aria-selected",String(on))});if(is3d&&!p3.dataset.mounted){const mount=window.mountCartoon3DStudio,root=document.getElementById("animation-studio-3d");if(typeof mount==="function"){mount(root);p3.dataset.mounted="true"}else{root.innerHTML="<p>Não foi possível carregar o motor 3D. Atualize a página e tente novamente.</p>"}}}
-b2.addEventListener("click",()=>select("2d"));b3.addEventListener("click",()=>select("3d"));bt.addEventListener("click",()=>select("tripo"));
+const b2=document.getElementById("tab-2d"),b3=document.getElementById("tab-3d"),p2=document.getElementById("panel-2d"),p3=document.getElementById("panel-3d");
+function select(mode){const is3d=mode==="3d";p2.hidden=is3d;p3.hidden=!is3d;[[b2,!is3d],[b3,is3d]].forEach(([b,on])=>{b.classList.toggle("active",on);b.setAttribute("aria-selected",String(on))});if(is3d&&!p3.dataset.mounted){const mount=window.mountCartoon3DStudio,root=document.getElementById("animation-studio-3d");if(typeof mount==="function"){mount(root);p3.dataset.mounted="true"}else{root.innerHTML="<p>Não foi possível carregar o motor 3D. Atualize a página e tente novamente.</p>"}}}
+b2.addEventListener("click",()=>select("2d"));b3.addEventListener("click",()=>select("3d"));
 })();
 </script>
 
