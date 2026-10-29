@@ -1,0 +1,51 @@
+name: Publicar motor de vídeo Lomi no Hugging Face
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código do motor
+        uses: actions/checkout@v4
+
+      - name: Publicar em um Space separado
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::Falta o segredo HF_TOKEN em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          python -m pip install --upgrade huggingface_hub
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi, create_repo
+
+          token = os.environ["HF_TOKEN"]
+          repo_id = "taisse/lomi-video-engine"
+          api = HfApi(token=token)
+
+          create_repo(
+              repo_id=repo_id,
+              repo_type="space",
+              space_sdk="gradio",
+              private=False,
+              exist_ok=True,
+              token=token,
+          )
+          api.upload_folder(
+              repo_id=repo_id,
+              repo_type="space",
+              folder_path="image-motion-engine/huggingface-space",
+              commit_message="Publica protótipo de movimento IA do Lomi",
+              token=token,
+          )
+          print(f"Arquivos publicados em https://huggingface.co/spaces/{repo_id}")
+          PY
