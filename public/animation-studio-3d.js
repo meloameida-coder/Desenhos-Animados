@@ -113,8 +113,9 @@ function mount(root){
   const generation=++importGeneration;await engineReady;if(!THREE||!OBJLoader||!MTLLoader){status.textContent='O motor 3D não inicializou. '+(engineError?'Detalhe: '+engineError+'. ':'')+'Confira a conexão e recarregue a página.';return;}
   loadLibraryBtn.disabled=true;status.textContent='Baixando o modelo escolhido e suas texturas…';
   try{
-   const assetRoot='https://cdn.jsdelivr.net/gh/meloameida-coder/Desenhos-Animados@9ec4980ddd530c4ed3184bfb7f70084028dcf862/',encodedPath=assetRoot+path.split('/').map(part=>encodeURIComponent(part)).join('/'),base=encodedPath.slice(0,encodedPath.lastIndexOf('/')+1),stem=path.split('/').pop().replace(/\.obj$/i,'');
-   const objResponse=await fetch(encodedPath);if(!objResponse.ok)throw Error('Não consegui baixar o OBJ (HTTP '+objResponse.status+').');const objText=await objResponse.text();
+   const assetRoots=['https://cdn.jsdelivr.net/gh/meloameida-coder/Desenhos-Animados@9ec4980ddd530c4ed3184bfb7f70084028dcf862/','https://raw.githubusercontent.com/meloameida-coder/Desenhos-Animados/main/'];let encodedPath='',base='',objResponse=null;const relativePath=path.split('/').map(part=>encodeURIComponent(part)).join('/');
+   for(const rootUrl of assetRoots){const candidate=rootUrl+relativePath;try{const response=await fetch(candidate);if(response.ok){encodedPath=candidate;base=encodedPath.slice(0,encodedPath.lastIndexOf('/')+1);objResponse=response;break;}}catch(_){}}
+   if(!objResponse)throw Error('Não consegui baixar o modelo 3D. Verifique a conexão e tente novamente.');const stem=path.split('/').pop().replace(/\.obj$/i,'');const objText=await objResponse.text();
    const mtlPath=base+encodeURIComponent(stem+'.mtl'),mtlResponse=await fetch(mtlPath);if(!mtlResponse.ok)throw Error('O arquivo MTL correspondente não foi encontrado.');
    const mtlText=await mtlResponse.text();const manager=new THREE.LoadingManager();manager.setURLModifier(url=>{let file=url.split(/[?#]/)[0].replace(/\\/g,'/').split('/').pop();try{file=decodeURIComponent(file)}catch(_){}return base+encodeURIComponent(file);});
    const materials=new MTLLoader(manager).parse(mtlText,base);materials.preload();const loader=new OBJLoader(manager);loader.setMaterials(materials);const loaded=loader.parse(objText);
