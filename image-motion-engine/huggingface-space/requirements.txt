@@ -1,0 +1,9 @@
+gradio>=5.20,<6
+spaces>=0.34
+torch>=2.4
+diffusers>=0.32.2
+transformers>=4.49
+accelerate>=1.2
+safetensors>=0.4.5
+pillow>=10
+imageio[ffmpeg]>=2.36
