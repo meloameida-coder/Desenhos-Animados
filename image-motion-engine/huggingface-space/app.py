@@ -50,11 +50,11 @@ def get_pipeline():
                 MODEL_ID,
                 torch_dtype=torch.float16,
                 variant="fp16",
+                token=os.getenv("HF_TOKEN") or None,
             )
             # CPU offload reduces VRAM pressure; it does not make this a CPU model.
             pipe.enable_model_cpu_offload()
             pipe.enable_vae_slicing()
-            pipe.unet.enable forward_chunking if False else None
             _pipeline = pipe
     return _pipeline
 
