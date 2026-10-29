@@ -44,10 +44,14 @@
 <label for="characters">Personagens</label><input id="characters" placeholder="Ex.: Ana, Bia e um coelhinho">
 <label for="theme">Tema da história</label><input id="theme" placeholder="Ex.: amizade, cores e números">
 <label for="script">História, cenas e diálogos</label><textarea id="script" placeholder="Escreva aqui sua história..."></textarea>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="button" type="button" id="generateScript">✨ Montar roteiro por cenas</button><button class="button" type="button" id="copyScript">📋 Copiar roteiro</button></div>
+<p class="muted" id="scriptHelper" aria-live="polite">O roteiro-base é montado no navegador a partir do tema e dos personagens; não usa IA externa.</p>
 <label for="format">Formato planejado</label><select id="format"><option>YouTube horizontal (16:9)</option><option>Shorts / Reels vertical (9:16)</option></select>
 <button class="button" type="submit">💾 Salvar projeto</button>
 </form></div></section>
-<section class="project"><h2>📚 Meus projetos salvos</h2><p class="muted">Os projetos ficam salvos neste navegador. Para sincronizar entre dispositivos, ainda é necessário conectar a autenticação e o banco de dados Supabase.</p><div id="projects"></div></section>
+<section class="project"><h2>📚 Meus projetos salvos</h2><p class="muted">Os projetos ficam salvos neste navegador. Para sincronizar entre dispositivos, ainda é necessário conectar a autenticação e o banco de dados Supabase.</p><div id="projects"></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="button" type="button" id="exportProjects">⬇️ Fazer backup dos projetos</button><button class="button" type="button" id="importProjectsButton">⬆️ Importar backup</button><input id="importProjectsFile" type="file" accept="application/json,.json" hidden></div>
+<p class="muted">O backup ajuda a levar os projetos para outro navegador ou computador. Ele inclui os roteiros e dados dos projetos, mas não inclui as imagens da biblioteca de personagens.</p></section>
 <section id="motor" class="project"><h2>🎞️ Estúdios de animação</h2><p class="muted">Escolha o modo de criação. O estúdio 2D continua disponível; o 3D funciona em uma aba separada.</p><div class="studio-tabs" role="tablist" aria-label="Modo de animação"><button class="studio-tab active" id="tab-2d" type="button" role="tab" aria-selected="true" aria-controls="panel-2d">🎨 Estúdio 2D</button><button class="studio-tab" id="tab-3d" type="button" role="tab" aria-selected="false" aria-controls="panel-3d">🧊 Estúdio 3D (novo)</button></div><div class="studio-panel" id="panel-2d"><h2>Motor de animação 2D — criar e movimentar personagem</h2><p class="muted">Personalize o personagem, escolha dançar, andar, pular ou acenar, visualize e gere um clipe curto. Este motor 2D funciona localmente no navegador e não usa chave de API.</p><div class="studio-shell"><div id="animation-studio"><p>Carregando o motor de animação…</p></div></div><p class="muted">Limitação transparente: este motor cria animação 2D procedural com personagens desenhados por código; ainda não transforma uma imagem enviada em animação realista por IA. O arquivo gerado é WebM.</p></div><div class="studio-panel" id="panel-3d" hidden><h2>🧊 Motor de animação 3D</h2><p class="muted">Crie um personagem tridimensional estilizado, escolha movimentos e exporte um clipe separado. O motor 3D é experimental e não altera os vídeos 2D.</p><div class="studio-shell"><div id="animation-studio-3d"><p>Carregando o motor 3D…</p></div></div></div>
 <section class="project"><h2>🔌 Integrações e estado</h2><div class="card"><p class="muted">Esta página já inclui o motor de animação 2D. A gravação de voz, geração musical, animação generativa por IA e sincronização online Supabase ainda não estão conectadas nesta página. Não insira chaves secretas neste site.</p></div></section>
 </main>
@@ -56,7 +60,66 @@
 const storageKey="desenhos-animados-ia-projetos";
 function getProjects(){try{return JSON.parse(localStorage.getItem(storageKey)||"[]")}catch{return[]}}
 function renderProjects(){const container=document.getElementById("projects");container.replaceChildren();const projects=getProjects();if(!projects.length){container.textContent="Seus projetos aparecerão aqui.";return}projects.forEach((project,index)=>{const card=document.createElement("div");card.className="saved-item";const title=document.createElement("strong");title.textContent=project.name;const details=document.createElement("p");details.textContent=project.kind+" · "+project.format+"\nPersonagens: "+(project.characters||"Não definidos")+"\nTema: "+(project.theme||"Não definido")+"\n\n"+(project.script||"História ainda não escrita");details.style.whiteSpace="pre-wrap";const remove=document.createElement("button");remove.className="button";remove.type="button";remove.textContent="Excluir projeto";remove.addEventListener("click",()=>{const updated=getProjects();updated.splice(index,1);localStorage.setItem(storageKey,JSON.stringify(updated));renderProjects()});card.append(title,details,remove);container.append(card)})}
+
 document.getElementById("projectForm").addEventListener("submit",event=>{event.preventDefault();const project={name:document.getElementById("name").value.trim(),kind:document.getElementById("kind").value,characters:document.getElementById("characters").value.trim(),theme:document.getElementById("theme").value.trim(),script:document.getElementById("script").value.trim(),format:document.getElementById("format").value};try{const projects=getProjects();projects.push(project);localStorage.setItem(storageKey,JSON.stringify(projects));document.getElementById("projectForm").reset();renderProjects();alert("Projeto salvo neste navegador!")}catch{alert("Não foi possível salvar. Verifique o espaço disponível no navegador.")}});
+
+const scriptBox=document.getElementById("script");
+const scriptHelper=document.getElementById("scriptHelper");
+document.getElementById("generateScript").addEventListener("click",()=>{
+ const theme=document.getElementById("theme").value.trim()||"amizade, descoberta e diversão";
+ const names=document.getElementById("characters").value.trim()||"Lomi e seus amigos";
+ const first=names.split(/[,;]/)[0].trim()||"Lomi";
+ scriptBox.value=[
+ "TÍTULO: "+(document.getElementById("name").value.trim()||"Uma pequena grande aventura"),
+ "PERSONAGENS: "+names,
+ "TEMA: "+theme,
+ "",
+ "CENA 1 — O COMEÇO",
+ first+" chega a um lugar colorido e percebe algo especial relacionado a "+theme+".",
+ first+": Olá, amiguinhos! O que será que vamos descobrir hoje?",
+ "",
+ "CENA 2 — A DESCOBERTA",
+ "Os personagens observam a situação com curiosidade e conversam sobre "+theme+".",
+ first+": Vamos olhar com atenção e descobrir juntos!",
+ "",
+ "CENA 3 — UM PEQUENO DESAFIO",
+ "Surge um desafio simples. Os amigos escutam uns aos outros e tentam resolver juntos.",
+ first+": Não tem problema tentar de novo. Podemos ajudar uns aos outros!",
+ "",
+ "CENA 4 — A SOLUÇÃO E A DESPEDIDA",
+ "Os amigos resolvem o desafio e celebram o que aprenderam sobre "+theme+".",
+ first+": Conseguimos juntos! Até a próxima aventura!",
+ "NARRAÇÃO FINAL: Hoje aprendemos que "+theme+" pode tornar cada dia uma nova descoberta."
+ ].join("\n");
+ scriptHelper.textContent="Roteiro-base criado. Revise os nomes e as falas antes de salvar o projeto. Este modelo não é uma geração por IA.";
+});
+document.getElementById("copyScript").addEventListener("click",async()=>{
+ if(!scriptBox.value.trim()){scriptHelper.textContent="Primeiro escreva ou monte um roteiro.";return;}
+ try{await navigator.clipboard.writeText(scriptBox.value);scriptHelper.textContent="Roteiro copiado para a área de transferência.";}
+ catch{scriptBox.focus();scriptBox.select();const copied=document.execCommand("copy");scriptHelper.textContent=copied?"Roteiro copiado para a área de transferência.":"Selecione o texto do roteiro e copie manualmente.";}
+});
+document.getElementById("exportProjects").addEventListener("click",()=>{
+ const payload={format:"lomi-project-backup",version:1,exportedAt:new Date().toISOString(),projects:getProjects()};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="lomi-backup-projetos.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+const importFile=document.getElementById("importProjectsFile");
+document.getElementById("importProjectsButton").addEventListener("click",()=>importFile.click());
+importFile.addEventListener("change",async()=>{
+ const file=importFile.files&&importFile.files[0];if(!file)return;
+ try{
+  const parsed=JSON.parse(await file.text());
+  const incoming=Array.isArray(parsed)?parsed:(parsed&&parsed.format==="lomi-project-backup"&&Array.isArray(parsed.projects)?parsed.projects:null);
+  if(!incoming)throw new Error("Este arquivo não parece ser um backup válido do Lomi.");
+  const valid=incoming.filter(p=>p&&typeof p.name==="string"&&p.name.trim()).map(p=>({name:p.name.trim(),kind:typeof p.kind==="string"?p.kind:"Desenho animado",characters:typeof p.characters==="string"?p.characters:"",theme:typeof p.theme==="string"?p.theme:"",script:typeof p.script==="string"?p.script:"",format:typeof p.format==="string"?p.format:"YouTube horizontal (16:9)"}));
+  if(!valid.length)throw new Error("O backup não contém projetos válidos.");
+  const existing=getProjects();let added=0;
+  valid.forEach(p=>{if(!existing.some(e=>e.name===p.name&&e.script===p.script)){existing.push(p);added++;}});
+  localStorage.setItem(storageKey,JSON.stringify(existing));renderProjects();
+  alert("Backup importado. "+added+" projeto(s) novo(s) adicionado(s); os projetos que já existiam foram preservados.");
+ }catch(error){alert("Não foi possível importar o backup: "+(error&&error.message?error.message:"arquivo inválido"));}
+ finally{importFile.value="";}
+});
 
 renderProjects();
 
