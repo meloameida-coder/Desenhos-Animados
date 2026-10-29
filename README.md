@@ -40,3 +40,10 @@ A chave publishable do Supabase pode ser usada no frontend. Nunca use `service_r
 - O motor está integrado ao app React deste repositório, mas o site estático `https://taisse-desenhos-animados-ia.static.hf.space/` é um repositório separado e não recebe estes commits automaticamente. A integração no Hugging Face exige publicar o mesmo arquivo e adicionar o carregador na página desse Space; não foi possível enviar commits diretamente ao Space nesta sessão porque não há conexão de escrita do Hugging Face disponível.
 - Para geração de vídeo por modelo de IA, modelos como AnimateDiff estão documentados no Diffusers, mas precisam de computação adequada. Um Space estático não executa o modelo; a opção ZeroGPU pode oferecer quota gratuita limitada, enquanto hardware GPU dedicado tem cobrança. Consulte a documentação do Hugging Face antes de habilitar hardware ou assumir que a execução será gratuita.
 - Nunca coloque `service_role`, `GEMINI_API_KEY` ou tokens privados no frontend ou no repositório.
+
+
+## Protótipo de vídeo IA para Hugging Face
+
+A pasta `image-motion-engine/huggingface-space/` contém um protótipo Gradio isolado para testar geração de clipes MP4 a partir de uma imagem. Ele usa Stable Video Diffusion XT e foi preparado para avaliação em um Hugging Face Space com Gradio/ZeroGPU. **Ainda não foi publicado nem testado com uma GPU real**, e não está conectado ao site ou ao Supabase.
+
+Para o primeiro teste, consulte o README dessa pasta. O modelo pode exigir aceitação da licença e um segredo `HF_TOKEN` configurado nas configurações do Space; nunca coloque esse token no código. O ZeroGPU gratuito tem limites e não é garantia de geração contínua. O modelo usado nesse protótipo não segue prompts de texto para determinar a ação; para ações exatas e personagens consistentes, o motor 3D controlável continua sendo a base.
