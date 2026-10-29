@@ -1,0 +1,23 @@
+name: Lomi video engine syntax check
+
+on:
+  pull_request:
+    paths:
+      - "image-motion-engine/huggingface-space/**"
+      - ".github/workflows/lomi-video-engine-check.yml"
+  push:
+    branches: [main]
+    paths:
+      - "image-motion-engine/huggingface-space/**"
+      - ".github/workflows/lomi-video-engine-check.yml"
+
+jobs:
+  python-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Python source
+        run: python -m py_compile image-motion-engine/huggingface-space/app.py
