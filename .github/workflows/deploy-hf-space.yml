@@ -39,11 +39,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          if git diff --quiet -- index.html; then
-            echo "O index.html do Space já está atualizado."
+          if git diff --quiet -- index.html ltx-generator.js lomi-first-animation.js; then
+            echo "Os arquivos do estúdio já estão atualizados."
             exit 0
           fi
 
-          git add index.html
+          git add index.html ltx-generator.js lomi-first-animation.js
           git commit -m "Atualiza estúdio de desenhos animados"
           git -c http.extraheader="AUTHORIZATION: Basic ${HF_AUTH}" push origin HEAD:main
