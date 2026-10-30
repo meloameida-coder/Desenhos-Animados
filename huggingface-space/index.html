@@ -83,17 +83,17 @@
 <button class="button" type="button" id="sendPromptToAiGenerator">↘ Usar prompt no gerador</button>
 <a class="button" href="https://wan2.video/generator.html?embed=1&lang=pt&model=wan-2-2-fast" target="_blank" rel="noopener noreferrer">Abrir gerador em nova aba</a>
 </div>
-<p id="aiVideoStatus" class="muted" aria-live="polite">Prepare o prompt. No gerador abaixo, selecione Image to Video, envie a imagem do personagem, cole o prompt e clique em Generate video. A geração usa uma fila pública gratuita; disponibilidade e limites podem variar.</p>
+<p id="aiVideoStatus" class="muted" aria-live="polite">Prepare o prompt. No gerador abaixo, selecione Image to Video, envie a imagem do personagem (JPG, PNG ou WEBP, até 10 MB), cole o prompt e clique em Generate video. A interface é gratuita e sem cadastro; o processamento usa modelos públicos de terceiros, com fila e limites variáveis.</p>
 </div>
 <div class="card" style="margin-top:14px;padding:10px">
 <h3 style="margin:8px 8px 12px;color:#202033">🎬 Gerador de vídeo IA — Wan / LTX</h3>
 <iframe id="aiVideoGeneratorFrame" title="Gerador público de vídeo por inteligência artificial" src="https://wan2.video/generator.html?embed=1&lang=pt&model=wan-2-2-fast" style="display:block;width:100%;height:920px;border:0;border-radius:12px;background:#fff" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
-<p class="muted" style="padding:8px">O gerador é um serviço externo incorporado ao estúdio. A imagem é enviada diretamente ao serviço público escolhido; não envie imagens privadas. Se o quadro não carregar, use “Abrir gerador em nova aba”.</p>
+<p class="muted" style="padding:8px">O gerador é um serviço externo incorporado ao estúdio. Ao gerar, a imagem e o prompt são enviados ao modelo público selecionado, não ao banco do Lomi. Não envie imagens privadas. Se o quadro não carregar, use “Abrir gerador em nova aba”.</p>
 </div>
 <div class="card" style="margin-top:14px">
 <strong>Como manter o Lomi parecido entre cenas</strong>
 <ol class="muted"><li>Use sempre a mesma imagem de referência do personagem.</li><li>Gere um clipe curto por cena e peça apenas um movimento principal.</li><li>Revise rosto, cores, roupa e número de personagens antes de usar o clipe.</li><li>Se o serviço estiver indisponível, aguarde ou tente outra ferramenta; não há garantia de fila ou cota gratuita.</li></ol>
-<p class="muted"><strong>Limite transparente:</strong> o gerador aparece dentro do estúdio, mas continua sendo um serviço público externo. Por segurança entre sites, o Lomi não consegue inserir automaticamente sua imagem ou o prompt no quadro; você envia a imagem e cola o prompt manualmente. Não há API paga, cobrança ou chave de pagamento conectada. Filas, cotas e disponibilidade dependem do serviço.</p>
+<p class="muted"><strong>Limite transparente:</strong> o gerador aparece dentro do estúdio, mas continua sendo um serviço público externo. Por segurança entre sites, o Lomi não consegue inserir automaticamente sua imagem ou o prompt no quadro; você envia a imagem (máximo 10 MB) e cola o prompt manualmente. Não há API paga, cobrança ou chave de pagamento conectada. Filas, cotas e disponibilidade dependem do serviço.</p>
 </div>
 </section>
 <section class="project"><h2>🔌 Integrações e estado</h2><div class="card"><p class="muted">Recursos locais: roteiros por cenas, storyboard com prompts, leitura em voz alta do navegador, exportação de roteiro TXT, pacote de produção JSON, impressão em PDF e backup/importação de projetos. O motor 2D também movimenta uma imagem enviada como sprite e exporta WebM; isso não equivale a animação generativa por IA nem a movimentos articulados. O estúdio 3D é procedural. Não conectamos serviços pagos nem alteramos o banco Supabase. Não insira chaves secretas neste site.</p></div></section>
