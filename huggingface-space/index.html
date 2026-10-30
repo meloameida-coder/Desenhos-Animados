@@ -69,6 +69,33 @@
 <p class="muted">O pacote reúne o roteiro, a ficha de produção e prompts sugeridos por cena. A impressão usa a função do navegador; escolha “Salvar como PDF”.</p></section>
 <section class="project" id="storyboardSection"><h2>🧩 Storyboard automático</h2><p class="muted">Transforma o roteiro em cartões de cenas com ação, narração e uma sugestão de prompt visual. Revise cada cartão antes de produzir a animação.</p><div id="storyboard" class="grid"></div><p id="storyboardStatus" class="muted" aria-live="polite">Monte um roteiro para preparar o storyboard.</p></section>
 <section id="motor" class="project"><h2>🎞️ Estúdios de animação</h2><p class="muted">Escolha o modo de criação. O estúdio 2D continua disponível; o 3D funciona em uma aba separada.</p><div class="studio-tabs" role="tablist" aria-label="Modo de animação"><button class="studio-tab active" id="tab-2d" type="button" role="tab" aria-selected="true" aria-controls="panel-2d">🎨 Estúdio 2D</button><button class="studio-tab" id="tab-3d" type="button" role="tab" aria-selected="false" aria-controls="panel-3d">🧊 Estúdio 3D (novo)</button></div><div class="studio-panel" id="panel-2d"><h2>Motor de animação 2D — criar e movimentar personagem</h2><p class="muted">Personalize o personagem, escolha dançar, andar, pular ou acenar, visualize e gere um clipe curto. Este motor 2D funciona localmente no navegador e não usa chave de API.</p><div class="studio-shell"><div id="animation-studio"><p>Carregando o motor de animação…</p></div></div><p class="muted">Limitação transparente: este motor cria animação 2D procedural com personagens desenhados por código; ainda não transforma uma imagem enviada em animação realista por IA. O arquivo gerado é WebM.</p></div><div class="studio-panel" id="panel-3d" hidden><h2>🧊 Motor de animação 3D</h2><p class="muted">Crie um personagem tridimensional estilizado, escolha movimentos e exporte um clipe separado. O motor 3D é experimental e não altera os vídeos 2D.</p><div class="studio-shell"><div id="animation-studio-3d"><p>Carregando o motor 3D…</p></div></div></div>
+
+<section class="project" id="lomi-first-animation">
+<h2>👋 Primeira animação da personagem Lomi</h2>
+<p class="muted">Prepare a imagem da personagem e veja um primeiro estudo de movimento: balanço corporal suave, cenário de parque e gesto de aceno. Este protótipo roda no navegador, sem consumir a cota do LTX-2.5.</p>
+<div class="card">
+<label for="lomiCharacterUpload">Imagem da personagem (PNG, JPG ou WebP)</label>
+<input id="lomiCharacterUpload" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="lomi-stage-wrap">
+<canvas id="lomiWaveCanvas" width="560" height="640" aria-label="Prévia animada da personagem acenando em um parque infantil"></canvas>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+<button class="button" type="button" id="lomiWavePlay">▶ Reproduzir aceno</button>
+<button class="button" type="button" id="lomiWavePause">⏸ Pausar</button>
+<button class="button" type="button" id="lomiWaveReset">↺ Reiniciar</button>
+</div>
+<p id="lomiWaveStatus" class="muted" role="status" aria-live="polite">Envie a imagem da personagem para começar. A prévia é processada localmente neste aparelho.</p>
+</div>
+<div class="card" style="margin-top:12px">
+<strong>O que esta primeira etapa faz</strong>
+<ul class="muted"><li>Cria um parque infantil colorido diretamente no navegador.</li><li>Remove o fundo branco quase uniforme da imagem para encaixar a personagem no cenário.</li><li>Aplica um balanço corporal suave e um gesto de aceno sobreposto.</li><li>Não usa GPU na nuvem, token, créditos ou Supabase.</li></ul>
+<p class="muted"><strong>Limite desta prévia:</strong> como a imagem original é uma única camada, o braço do aceno é um elemento sobreposto; ainda não é um esqueleto 3D nem uma articulação perfeita do braço original. Esta etapa prepara a experiência e permite validar o movimento antes de construirmos o rig completo.</p>
+</div>
+</section>
+<style>
+#lomi-first-animation .lomi-stage-wrap{width:100%;max-width:560px;margin:14px auto 0;border-radius:18px;overflow:hidden;background:#bceaff}
+#lomiWaveCanvas{display:block;width:100%;height:auto}
+</style>
 <section class="project" id="ai-video-lab">
 <h2>🤖 Laboratório de IA generativa de vídeo</h2>
 <p class="muted">Prepare uma cena do Lomi para o LTX-2.5, modelo de IA que transforma imagem em vídeo e também pode gerar áudio sincronizado. A geração é processada em uma demonstração pública do Hugging Face, fora do banco de dados do Lomi.</p>
@@ -172,6 +199,7 @@ b2.addEventListener("click",()=>select("2d"));b3.addEventListener("click",()=>se
 })();
 </script>
 
+<script src="./lomi-first-animation.js" defer></script>
 <script type="module" src="./ltx-generator.js"></script>
 </body>
 </html>
