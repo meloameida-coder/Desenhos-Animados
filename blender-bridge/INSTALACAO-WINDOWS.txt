@@ -1,0 +1,10 @@
+LOMI STUDIO — PREPARAÇÃO PARA BLENDER
+
+1. Instale o Blender pelo site oficial: https://www.blender.org/download/
+2. Extraia a biblioteca OBJ para uma pasta local.
+3. No Blender, instale o add-on Lomi Studio - Biblioteca 3D conforme blender-bridge/README.md.
+4. Abra a aba Lomi na lateral da janela 3D (tecla N).
+5. Use Importar todos os OBJ de uma pasta.
+
+A integração com o site ainda não controla o Blender remotamente. Esta versão prepara importação e cena de trabalho; rigging automático e ponte de render serão etapas seguintes.
+Nenhum acesso ao Supabase é necessário.
