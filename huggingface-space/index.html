@@ -70,6 +70,23 @@
 <section class="project" id="storyboardSection"><h2>🧩 Storyboard automático</h2><p class="muted">Transforma o roteiro em cartões de cenas com ação, narração e uma sugestão de prompt visual. Revise cada cartão antes de produzir a animação.</p><div id="storyboard" class="grid"></div><p id="storyboardStatus" class="muted" aria-live="polite">Monte um roteiro para preparar o storyboard.</p></section>
 <section id="motor" class="project"><h2>🎞️ Estúdios de animação</h2><p class="muted">Escolha o modo de criação. O estúdio 2D continua disponível; o 3D funciona em uma aba separada.</p><div class="studio-tabs" role="tablist" aria-label="Modo de animação"><button class="studio-tab active" id="tab-2d" type="button" role="tab" aria-selected="true" aria-controls="panel-2d">🎨 Estúdio 2D</button><button class="studio-tab" id="tab-3d" type="button" role="tab" aria-selected="false" aria-controls="panel-3d">🧊 Estúdio 3D (novo)</button></div><div class="studio-panel" id="panel-2d"><h2>Motor de animação 2D — criar e movimentar personagem</h2><p class="muted">Personalize o personagem, escolha dançar, andar, pular ou acenar, visualize e gere um clipe curto. Este motor 2D funciona localmente no navegador e não usa chave de API.</p><div class="studio-shell"><div id="animation-studio"><p>Carregando o motor de animação…</p></div></div><p class="muted">Limitação transparente: este motor cria animação 2D procedural com personagens desenhados por código; ainda não transforma uma imagem enviada em animação realista por IA. O arquivo gerado é WebM.</p></div><div class="studio-panel" id="panel-3d" hidden><h2>🧊 Motor de animação 3D</h2><p class="muted">Crie um personagem tridimensional estilizado, escolha movimentos e exporte um clipe separado. O motor 3D é experimental e não altera os vídeos 2D.</p><div class="studio-shell"><div id="animation-studio-3d"><p>Carregando o motor 3D…</p></div></div></div>
 
+<section class="project" id="blender-connection">
+<h2>🧊 Preparar conexão com Blender</h2>
+<p class="muted">O Blender será o motor local para importar os personagens, preparar cenas, modelar, criar esqueletos e renderizar. Esta área reúne o estado e as instruções de instalação. O site ainda não controla o Blender remotamente.</p>
+<div class="card">
+<strong>Etapa atual: preparar o computador</strong>
+<ol class="muted">
+<li>Instale o Blender gratuito pelo <a href="https://www.blender.org/download/" target="_blank" rel="noopener noreferrer">site oficial</a>.</li>
+<li>Baixe o repositório do Lomi Studio e instale o add-on em <code>blender-bridge/blender_addon</code>.</li>
+<li>Extraia a biblioteca de personagens OBJ em uma pasta do computador.</li>
+<li>No Blender, abra a aba <strong>Lomi</strong> (tecla N) e use a importação da biblioteca.</li>
+</ol>
+<p class="muted">O add-on atual importa OBJ, organiza os modelos em coleções e prepara câmera, luz e timeline. Ele ainda não cria rigging automático nem envia vídeos ao site.</p>
+<a class="button" href="https://github.com/meloameida-coder/Desenhos-Animados/tree/main/blender-bridge" target="_blank" rel="noopener noreferrer">Abrir arquivos de integração</a>
+<a class="button" href="https://www.blender.org/download/" target="_blank" rel="noopener noreferrer">Baixar Blender</a>
+<p id="blenderLocalStatus" class="muted" role="status" aria-live="polite">Conexão local ainda não configurada. Não tente conectar antes de instalar e iniciar o conector.</p>
+</div>
+</section>
 <section class="project" id="lomi-first-animation">
 <h2>👋 Primeira animação da personagem Lomi</h2>
 <p class="muted">Prepare a imagem da personagem e veja um primeiro estudo de movimento: balanço corporal suave, cenário de parque e gesto de aceno. Este protótipo roda no navegador, sem consumir a cota do LTX-2.5.</p>
