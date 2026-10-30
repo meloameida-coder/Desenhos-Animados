@@ -7,6 +7,7 @@ on:
     paths:
       - "huggingface-space/index.html"
       - "huggingface-space/ltx-generator.js"
+      - "huggingface-space/lomi-first-animation.js"
       - ".github/workflows/deploy-hf-space.yml"
 
 permissions:
@@ -33,6 +34,7 @@ jobs:
           git -c http.extraheader="AUTHORIZATION: Basic ${HF_AUTH}" clone https://huggingface.co/spaces/taisse/desenhos-animados-ia hf-space
           cp huggingface-space/index.html hf-space/index.html
           cp huggingface-space/ltx-generator.js hf-space/ltx-generator.js
+          cp huggingface-space/lomi-first-animation.js hf-space/lomi-first-animation.js
           cd hf-space
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
