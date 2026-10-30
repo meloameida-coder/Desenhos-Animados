@@ -85,10 +85,20 @@
 </div>
 <p id="aiVideoStatus" class="muted" aria-live="polite">Prepare o prompt, abra o LTX-2.5, envie a imagem do personagem, cole o texto e clique em Generate. A demonstração pública tem fila e cotas gratuitas limitadas; não é geração ilimitada.</p>
 </div>
-<div class="card" style="margin-top:14px;padding:10px">
-<h3 style="margin:8px 8px 12px;color:#202033">🎬 Gerador de vídeo IA — LTX-2.5</h3>
-<iframe id="aiVideoGeneratorFrame" title="Gerador público de vídeo por inteligência artificial" src="https://lightricks-ltx-2-5.hf.space" style="display:block;width:100%;height:920px;border:0;border-radius:12px;background:#fff" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
-<p class="muted" style="padding:8px">O LTX-2.5 é executado em um Space público do Hugging Face. Ao gerar, sua imagem e seu prompt são enviados diretamente ao serviço externo, não ao banco de dados do Lomi. Não envie imagens privadas. Se o quadro não carregar, abra a demonstração em uma nova aba.</p>
+<div class="card" style="margin-top:14px">
+<h3 style="margin:8px 8px 12px;color:#202033">🎬 Gerar vídeo diretamente com LTX-2.5</h3>
+<label for="ltxImage">Imagem do personagem (PNG, JPG ou WebP; até 10 MB)</label>
+<input id="ltxImage" type="file" accept="image/png,image/jpeg,image/webp">
+<label for="ltxDuration">Duração do clipe</label>
+<select id="ltxDuration"><option value="2">2 segundos</option><option value="3">3 segundos</option><option value="4">4 segundos</option><option value="5">5 segundos</option></select>
+<p class="muted">O prompt é aproveitado do campo acima. O Lomi conecta diretamente à API pública do Gradio no Hugging Face, envia a imagem e acompanha o processamento na fila.</p>
+<button class="button" type="button" id="ltxGenerate">✨ Gerar vídeo com IA</button>
+<p id="ltxStatus" class="muted" role="status" aria-live="polite">Aguardando imagem e prompt.</p>
+<div id="ltxResult" hidden>
+<video id="ltxVideo" controls playsinline style="display:block;width:100%;max-height:520px;border-radius:12px;background:#000"></video>
+<a id="ltxDownload" class="button" hidden>⬇️ Baixar vídeo MP4</a>
+</div>
+<p class="muted">A geração é feita pelo serviço público LTX-2.5, não pelo banco de dados do Lomi. A demonstração usa GPU compartilhada, pode ter fila, limites e períodos de indisponibilidade. O Lomi não configura cobrança nem usa chave paga.</p>
 </div>
 <div class="card" style="margin-top:14px">
 <strong>Como manter o Lomi parecido entre cenas</strong>
